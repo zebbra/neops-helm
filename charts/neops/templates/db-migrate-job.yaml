@@ -1,0 +1,45 @@
+{{- if .Values.hooks.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "neops.fullname" . }}-db-migrate
+  labels:
+    {{- include "neops.labels" . | nindent 4 }}
+    app.kubernetes.io/component: db-migrate
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      name: {{ include "neops.fullname" . }}-db-migrate
+    spec:
+      restartPolicy: Never
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: db-migrate
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/app/manage.py"]
+          args: ["migrate"]
+          {{- if .Values.existingSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+          {{- end }}
+          env:
+            {{- if not .Values.existingSecret }}
+            - name: DJANGO_SECRET_KEY
+              value: {{ .Values.secrets.DJANGO_SECRET_KEY | quote }}
+            - name: REDIS_URL
+              value: {{ .Values.secrets.REDIS_URL | quote }}
+            - name: DATABASE_URL
+              value: {{ .Values.secrets.DATABASE_URL | quote }}
+            {{- end }}
+            - name: NEOPS_PLUGINS
+              value: {{ .Values.config.NEOPS_PLUGINS | quote }}
+{{- end }}

@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "neops.fullname" . }}-app
+  labels:
+    {{- include "neops.labels" . | nindent 4 }}
+    app.kubernetes.io/component: app
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "neops.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: app
+  template:
+    metadata:
+      labels:
+        {{- include "neops.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: app
+      annotations:
+        checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "neops.fullname" . }}
+            - secretRef:
+                {{- if .Values.existingSecret }}
+                name: {{ .Values.existingSecret }}
+                {{- else }}
+                name: {{ include "neops.fullname" . }}
+                {{- end }}
+          {{- with .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+        {{- if .Values.openvpn.enabled }}
+        - name: openvpn
+          image: "{{ .Values.openvpn.image.repository }}:{{ .Values.openvpn.image.tag }}"
+          imagePullPolicy: {{ .Values.openvpn.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.openvpn.resources | nindent 12 }}
+          volumeMounts:
+            - name: openvpn-config
+              mountPath: /etc/openvpn
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+        {{- end }}
+
+      {{- with .Values.app.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.app.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.app.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if .Values.openvpn.enabled }}
+        - name: openvpn-config
+          configMap:
+            name: {{ .Values.openvpn.configName }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}

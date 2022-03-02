@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "neops.fullname" . }}-worker
+  labels:
+    {{- include "neops.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "neops.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "neops.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+      annotations:
+        checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/usr/local/bin/celery"]
+          args: ["-A", "neopsapp", "worker",  "--concurrency", "{{ .Values.worker.concurrency }}", "-l", "INFO", "--prefetch-multiplier", "1", "-O", "fair" ]
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "neops.fullname" . }}
+            - secretRef:
+                {{- if .Values.existingSecret }}
+                name: {{ .Values.existingSecret }}
+                {{- else }}
+                name: {{ include "neops.fullname" . }}
+                {{- end }}
+          env:
+            - name: ELASTICSEARCH_DSL_SIGNAL_PROCESSOR
+              value: neops.core.documents.neops_signal_processor.NeopsCacheSignalProcessor
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 10
+            exec:
+              command: [ "bash", "-c", "celery -A neopsapp inspect ping -d celery@$HOSTNAME"]
+          {{- with .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+        {{- if .Values.openvpn.enabled }}
+        - name: openvpn
+          image: "{{ .Values.openvpn.image.repository }}:{{ .Values.openvpn.image.tag }}"
+          imagePullPolicy: {{ .Values.openvpn.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.openvpn.resources | nindent 12 }}
+          volumeMounts:
+            - name: openvpn-config
+              mountPath: /etc/openvpn
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+      {{- end }}
+      {{- with .Values.worker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if .Values.openvpn.enabled }}
+        - name: openvpn-config
+          configMap:
+            name: {{ .Values.openvpn.configName }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}

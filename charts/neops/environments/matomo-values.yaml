@@ -1,0 +1,145 @@
+replicaCount: 1
+revisionHistoryLimit: 0
+
+## PodDisruptionBudget
+## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
+# maxUnavailable: 1
+
+image:
+  repository: t3nde/matomo
+  tag: 4.3.1-fpm-alpine
+  pullPolicy: IfNotPresent
+
+nginx:
+  image:
+    repository: nginx
+    tag: 1.18.0-alpine
+    pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  annotations: {}
+  labels: {}
+
+persistence:
+  enabled: true
+  annotations: {}
+  accessMode: ReadWriteOnce
+  existingClaim: ""
+  ## database data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+  size: 2Gi
+  mountPath: "/data"
+  subPath: ""
+
+extraEnvs: {}
+  # MATOMO_GENERAL_ENABLE_PLUGINS_ADMIN: 0
+  # MATOMO_GENERAL_FORCE_SSL: 1
+
+cronjobs:
+  archive:
+    enabled: false
+    schedule: "1 * * * *"
+    resources: {}
+      # limits:
+      #  cpu: 100m
+      #  memory: 128Mi
+      # requests:
+      #  cpu: 100m
+      #  memory: 128Mi
+    # Specifys how many requests are made by the archive command (default 3)
+    concurrentRequests: 3
+
+  ipdb:
+    enabled: false
+    # On the first day of the month at 10am
+    schedule: "0 10 1 * *"
+    resources: {}
+      # limits:
+      #  cpu: 100m
+      #  memory: 128Mi
+      # requests:
+      #  cpu: 100m
+      #  memory: 128Mi
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - matomo.neops.io
+  tls:
+    - secretName: kibana-tls
+      hosts:
+        - matomo.neops.io
+
+salt: "A8QmHDwgjWrYz899iCXGhoJWDLRnkq79"
+
+metrics:
+  enabled: true
+
+## LivenessProbe
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+livenessProbe:
+  path: /matomo.php
+  initialDelaySeconds: 60
+  timeoutSeconds: 1
+  periodSeconds: 15
+readinessProbe:
+  path: /matomo.php
+  initialDelaySeconds: 0
+  periodSeconds: 25
+  timeoutSeconds: 5
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+# Lifecycle for app deployment
+# lifecycle:
+#   preStop:
+#     exec:
+#       command:
+#       - sh
+#       - -c
+#       - "sleep 20"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+antiAffinity: soft
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 3
+  cpuPercentage: 100
+
+database:
+  host: mysql
+  adapter: PDO\MYSQL
+  tables_prefix: matomo_
+  dbname: matomo
+  username: matomo
+  password: "deport-ARGOT-banns-abhor"
+
+mysql:
+  enabled: true
+  mysqlUser: matomo
+  mysqlPassword: "deport-ARGOT-banns-abhor"
+  mysqlDatabase: matomo
+

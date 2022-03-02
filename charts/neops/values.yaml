@@ -1,0 +1,160 @@
+# Default values for neops.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: quay.io/zebbra/neops-core
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
+
+
+hooks:
+  # set to false to disable db-migrate/es-rebuild jobs on upgrade
+  enabled: true
+
+config:
+  NEOPS_PLUGINS: ""
+  DJANGO_ALLOWED_HOSTS: "*"
+  DEBUG: "False"
+  ELASTICSEARCH_DSL_INDEX_SHARDS: "1"
+  ELASTICSEARCH_DSL_INDEX_REPLICAS: "0"
+  ELASTICSEARCH_DSL_INDEX_FIELDS_LIMIT: "10000"
+  SENTRY_DSN: "https://8660729367894da1b27a5f2980fa5bde@sentry.zebbra.ch/120"
+  SENTRY_ENVIRONMENT: dev
+
+secrets:
+  DJANGO_SECRET_KEY: insecure-default-secret
+  DATABASE_URL: postgres://neops-postgres:5432/neops
+  REDIS_URL: redis://neops-redis:6379/0
+  ELASTICSEARCH_HOSTS: http://neops-es-master:9200
+
+# use existing secret instead of secrets from values
+existingSecret: ""
+
+extraVolumes: []
+
+extraVolumeMounts: []
+
+########################################################################################
+# Application Deployment
+########################################################################################
+
+app:
+  replicaCount: 1
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+
+########################################################################################
+# Worker Deployment
+########################################################################################
+
+worker:
+  replicaCount: 1
+  concurrency: 1
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+
+########################################################################################
+# OpenVPN Sidecar
+########################################################################################
+
+openvpn:
+  enabled: false
+
+  image:
+    repository: ventz/openvpn
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 10Mi
+    requests:
+      cpu: 10m
+      memory: 5Mi
+
+  # existing configmap containing OpenVPN configuration
+  configName: "neops-openvpn"
+
+
+########################################################################################
+# Redis Subchart
+# https://github.com/bitnami/charts/blob/master/bitnami/redis/values.yaml
+########################################################################################
+
+redis:
+  enabled: false
+
+
+########################################################################################
+# etcd Subchart
+# https://github.com/bitnami/charts/blob/master/bitnami/etcd/values.yaml
+########################################################################################
+
+etcd:
+  enabled: false
+
+
+########################################################################################
+# Elasicsearch Subchart
+# https://github.com/elastic/helm-charts/blob/master/elasticsearch/values.yaml
+########################################################################################
+
+elasticsearch:
+  enabled: false
+
+
+########################################################################################
+# Kibana Subchart
+# https://github.com/elastic/helm-charts/blob/master/kibana/values.yaml
+########################################################################################
+
+kibana:
+  enabled: false
+

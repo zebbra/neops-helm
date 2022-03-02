@@ -1,0 +1,38 @@
+{{- if .Values.hooks.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "neops.fullname" . }}-es-rebuild
+  labels:
+    {{- include "neops.labels" . | nindent 4 }}
+    app.kubernetes.io/component: es-rebuild
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      name: {{ include "neops.fullname" . }}-es-rebuild
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: es-rebuild
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/app/manage.py"]
+          args: ["elastic_index", "--rebuild", "--force"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "neops.fullname" . }}
+            - secretRef:
+                {{- if .Values.existingSecret }}
+                name: {{ .Values.existingSecret }}
+                {{- else }}
+                name: {{ include "neops.fullname" . }}
+                {{- end }}
+{{- end }}
