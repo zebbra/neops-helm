@@ -55,7 +55,6 @@ hooks:
   # disable hooks for faster deployments
   enabled: true
 
-
 elasticsearch:
   enabled: true
 
@@ -73,7 +72,6 @@ elasticsearch:
     resources:
       requests:
         storage: 5Gi
-
 
 kibana:
   enabled: true
@@ -108,7 +106,6 @@ kibana:
               - key: app
                 operator: In
                 values: [kibana]
-
 
 redis:
   enabled: true
