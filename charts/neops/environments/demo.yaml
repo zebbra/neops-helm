@@ -8,6 +8,8 @@ image:
 imagePullSecrets:
   - name: zebbra-kube-pull-secret
 
+existingSecret: "neops"
+
 app:
   replicaCount: 2
 
@@ -18,73 +20,138 @@ openvpn:
   enabled: true
   configName: openvpn-config
 
-secrets:
-  DJANGO_SECRET_KEY: e068c0c112632ed803ab19011b45d7c3
-  DATABASE_URL: postgres://neops:delaware-crank-acrimony@postgres.kubedb/neops_demo
-  REDIS_URL: redis://neops-demo-redis-master:6379/0
-  ELASTICSEARCH_HOSTS: http://neops-demo-es-master:9200
+# secrets:
+#   DJANGO_SECRET_KEY: e068c0c112632ed803ab19011b45d7c3
+#   DATABASE_URL: postgres://neops:delaware-crank-acrimony@postgres.kubedb/neops_demo
+#   REDIS_URL: redis://neops-demo-redis-master:6379/0
+#   ELASTICSEARCH_HOSTS: http://neops-demo-es-master:9200
 
 config:
   NEOPS_PLUGINS: "neops_cron neops_auth_django neops_permissions_simple"
   DJANGO_ALLOWED_HOSTS: "*"
   DEBUG: "False"
-  ELASTICSEARCH_DSL_INDEX_SHARDS: "3"
-  ELASTICSEARCH_DSL_INDEX_REPLICAS: "1"
-  ELASTICSEARCH_DSL_INDEX_FIELDS_LIMIT: "10000"
+  ELASTICSEARCH_DSL_INDEX_SHARDS: 3
+  ELASTICSEARCH_DSL_INDEX_REPLICAS: 2
+  ELASTICSEARCH_DSL_INDEX_FIELDS_LIMIT: 10000
+  ELASTICSEARCH_DSL_AUTOSYNC: true
+  ELASTICSEARCH_DSL_FLUSH_CACHE_SIZE: 400
   SENTRY_ENVIRONMENT: demo
 
 ingress:
   enabled: true
   annotations:
-    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 200m
   hosts:
-    - demo.neops.io
+    - host: demo.neops.io
+      paths: [/]
   tls:
     - secretName: neops-demo-tls
       hosts:
         - demo.neops.io
 
+hooks:
+  # disable hooks for faster deployments
+  enabled: true
+
+
 elasticsearch:
-  deployChart: true
+  enabled: true
 
   clusterName: neops-demo-es
 
+  replicas: 3
+  minimumMasterNodes: 2
+  maxUnavailable: 1
+
+  antiAffinityTopologyKey: "kubernetes.io/hostname"
+  antiAffinity: "soft"
+
   volumeClaimTemplate:
-    storageClassName: "rook-ceph-block"
     accessModes: ["ReadWriteOnce"]
     resources:
       requests:
         storage: 5Gi
 
+
 kibana:
-  deployChart: true
+  enabled: true
+
+  replicas: 2
 
   elasticsearchHosts: http://neops-demo-es-master:9200
 
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/tls-acme: "true"
-    path: /
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: 200m
     hosts:
-      - kibana.demo.neops.io
+      - host: kibana.demo.neops.io
+        paths: [/]
     tls:
-      - secretName: kibana-tls
+      - secretName: neops-demo-kibana-tls
         hosts:
-          - kibana.demo.neops.io
+          - demo.neops.io
+
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchExpressions:
+              - key: release
+                operator: In
+                values: [neops]
+              - key: app
+                operator: In
+                values: [kibana]
+
 
 redis:
-  deployChart: true
-
+  enabled: true
   usePassword: false
+
+  auth:
+    enabled: false
 
   master:
     persistence:
       enabled: true
-      storageClass: rook-ceph-block
       size: 5Gi
 
+  replica:
+    persistence:
+      enabled: true
+      size: 5Gi
+
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    namespace: neops
+
 etcd:
-  deployChart: true  
-  persistence:
-    enabled: false
+  enabled: false
+  # replicaCount: 3
+
+  # auth:
+  #   rbac:
+  #     enabled: false
+
+  # persistence:
+  #   enabled: true
+  #   size: 1Gi
+
+  # pdb:
+  #   create: true
+  #   minAvailable: 2
+  #   # maxUnavailable: 1
+
+  metrics:
+    enabled: true
+    podMonitor:
+      enabled: true
+      interval: 15s
+      namespace: neops
