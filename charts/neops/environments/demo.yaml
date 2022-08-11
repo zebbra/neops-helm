@@ -89,7 +89,8 @@ kibana:
       nginx.ingress.kubernetes.io/proxy-body-size: 200m
     hosts:
       - host: kibana.demo.neops.io
-        paths: [/]
+        paths:
+          - path: /
     tls:
       - secretName: neops-demo-kibana-tls
         hosts:
