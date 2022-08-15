@@ -3,7 +3,7 @@
 #
 
 image:
-  tag: develop
+  tag: master
 
 imagePullSecrets:
   - name: zebbra-kube-pull-secret
