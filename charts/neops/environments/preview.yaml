@@ -3,12 +3,12 @@
 #
 
 image:
-  tag: master
+  tag: develop
 
 imagePullSecrets:
   - name: zebbra-kube-pull-secret
 
-existingSecret: "neops"
+# existingSecret: "neops"
 
 app:
   replicaCount: 2
@@ -16,15 +16,16 @@ app:
 worker:
   replicaCount: 2
 
-openvpn:
-  enabled: true
-  configName: openvpn-config
+# there is currently not yet a openvpn-config map in our k8s
+# openvpn:
+#   enabled: true
+#   configName: openvpn-config
 
-# secrets:
-#   DJANGO_SECRET_KEY: e068c0c112632ed803ab19011b45d7c3
-#   DATABASE_URL: postgres://neops:delaware-crank-acrimony@postgres.kubedb/neops_demo
-#   REDIS_URL: redis://neops-demo-redis-master:6379/0
-#   ELASTICSEARCH_HOSTS: http://neops-demo-es-master:9200
+secrets:
+  DJANGO_SECRET_KEY: e068c0c112632ed803ab19011b45d7c3
+  DATABASE_URL: postgres://neopspreview:the-password-from-secret@neops-postgres.neops:5432/neopspreview
+  REDIS_URL: redis://neops-preview-redis-master:6379/0
+  ELASTICSEARCH_HOSTS: http://neops-preview-es-master:9200
 
 config:
   NEOPS_PLUGINS: "neops_cron neops_auth_django neops_permissions_simple"
@@ -43,9 +44,12 @@ ingress:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: 200m
+    kubernetes.io/tls-acme: "true"
   hosts:
     - host: preview.neops.io
-      paths: [/]
+      paths:
+        - path: /
+          pathType: Prefix
   tls:
     - secretName: neops-preview-tls
       hosts:
@@ -83,12 +87,12 @@ kibana:
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/ingress.class: nginx
       nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-body-size: 200m
     hosts:
       - host: kibana.preview.neops.io
-        paths: [/]
+        paths:
+          - path: /
     tls:
       - secretName: neops-preview-kibana-tls
         hosts:

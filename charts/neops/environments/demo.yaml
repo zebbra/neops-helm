@@ -3,7 +3,7 @@
 #
 
 image:
-  tag: develop
+  tag: master
 
 imagePullSecrets:
   - name: zebbra-kube-pull-secret
@@ -88,7 +88,6 @@ kibana:
   ingress:
     enabled: true
     annotations:
-      # kubernetes.io/ingress.class: nginx
       nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-body-size: 200m
     hosts:
