@@ -50,6 +50,7 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+
   tls:
     - secretName: neops-preview-tls
       hosts:
