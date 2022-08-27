@@ -8,7 +8,7 @@ image:
 imagePullSecrets:
   - name: zebbra-kube-pull-secret
 
-# existingSecret: "neops"
+existingSecret: "neops"
 
 app:
   replicaCount: 2
