@@ -112,6 +112,17 @@ kibana:
                 operator: In
                 values: [kibana]
 
+web-sdk:
+  ingress:
+    enabled: true
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 200m
+    hosts:
+    - host: demo.neops.io
+      paths:
+        - path: /websdk
+          pathType: Prefix
+
 redis:
   enabled: true
   usePassword: false
