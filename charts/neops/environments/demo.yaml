@@ -12,6 +12,8 @@ existingSecret: "neops-demo"
 
 app:
   replicaCount: 2
+  service:
+    port: 8000
 
 worker:
   replicaCount: 2
