@@ -32,6 +32,7 @@ secrets:
 config:
   NEOPS_PLUGINS: "neops_cron neops_auth_django neops_permissions_simple neops_reports"
   DJANGO_ALLOWED_HOSTS: "*"
+  CORS_ORIGIN_ALLOW_ALL: "True"
   DEBUG: "False"
   ELASTICSEARCH_DSL_INDEX_SHARDS: 3
   ELASTICSEARCH_DSL_INDEX_REPLICAS: 2
