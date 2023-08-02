@@ -30,7 +30,7 @@ secrets:
   ELASTICSEARCH_HOSTS: http://neops-preview-es-master:9200
 
 config:
-  NEOPS_PLUGINS: "neops_cron neops_auth_django neops_permissions_simple"
+  NEOPS_PLUGINS: "neops_cron neops_auth_django neops_permissions_simple neops_reports"
   DJANGO_ALLOWED_HOSTS: "*"
   DEBUG: "False"
   ELASTICSEARCH_DSL_INDEX_SHARDS: 3

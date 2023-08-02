@@ -1,0 +1,25 @@
+#
+# Chart: neops-web-client preview environment
+#
+
+image:
+  tag: latest
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: web-client.preview.neops.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: neops-web-client-preview-tls
+      host:
+        - web-client.preview.neops.io
+        - www.web-client.preview.neops.io
+
+backend:
+  backendUrl: "https://preview.neops.io/graphql"
