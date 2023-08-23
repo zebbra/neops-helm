@@ -33,8 +33,8 @@ spec:
               containerPort: {{ .Values.app.service.port }}
               protocol: TCP
           livenessProbe:
-            initialDelaySeconds: 90
-            timeoutSeconds: 5
+            initialDelaySeconds: 180
+            timeoutSeconds: 10
             periodSeconds: 10
             httpGet:
               path: /
