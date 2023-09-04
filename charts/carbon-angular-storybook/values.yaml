@@ -53,7 +53,7 @@ ingress:
           pathType: Prefix
   tls:
     - secretName: angular-storybook-neops-tls
-      host:
+      hosts:
         - angular-storybook.neops.zebbra.ch
 
 livenessProbe:
