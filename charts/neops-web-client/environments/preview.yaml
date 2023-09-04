@@ -17,7 +17,7 @@ ingress:
           pathType: Prefix
   tls:
     - secretName: neops-web-client-preview-tls
-      host:
+      hosts:
         - web-client.preview.neops.io
         - www.web-client.preview.neops.io
 
