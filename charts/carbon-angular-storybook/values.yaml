@@ -8,7 +8,7 @@ image:
   repository: quay.io/zebbra/carbon-components-angular-storybook
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 4.72.1
+  # tag: 4.72.1
 
 imagePullSecrets:
   - name: zebbra-kube-pull-secret
