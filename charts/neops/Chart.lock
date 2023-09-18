@@ -1,15 +1,15 @@
 dependencies:
 - name: elasticsearch
   repository: https://helm.elastic.co
-  version: 7.16.3
+  version: 8.5.1
 - name: kibana
   repository: https://helm.elastic.co
-  version: 7.16.3
+  version: 8.5.1
 - name: redis
   repository: https://charts.bitnami.com/bitnami
-  version: 15.3.2
+  version: 18.0.4
 - name: etcd
   repository: https://charts.bitnami.com/bitnami
-  version: 6.8.0
-digest: sha256:6db821d3d17f1bc1becb5ccf6ab02629c2bdc02fcae2446b2e874c0254348ea3
-generated: "2022-02-28T17:48:19.230379+01:00"
+  version: 9.5.0
+digest: sha256:3cc3fd740fb2ae0bf9049c0810e71907deea8332685d4428dea856025c0d540f
+generated: "2023-09-18T12:52:50.138797+02:00"
