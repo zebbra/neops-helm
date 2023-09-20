@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "neops.fullname" . }}
+  labels:
+    {{- include "neops.labels" . | indent 4 }}
+spec:
+  maxUnavailable: {{ .Values.app.pdb.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "neops.selectorLabels" . | nindent 6 }}
