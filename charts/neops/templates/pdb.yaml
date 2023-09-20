@@ -1,9 +1,9 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "neops.fullname" . }}
+  name: {{ include "neops.fullname" . }}-pdb
   labels:
-    {{- include "neops.labels" . | indent 4 }}
+    {{- include "neops.labels" . | nindent 4 }}
 spec:
   maxUnavailable: {{ .Values.app.pdb.maxUnavailable }}
   selector:
