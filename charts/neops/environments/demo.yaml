@@ -14,8 +14,6 @@ app:
   replicaCount: 2
   service:
     port: 8000
-  pdb:
-    maxUnavailable: 1
 
 worker:
   replicaCount: 2
