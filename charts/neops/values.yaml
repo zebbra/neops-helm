@@ -148,6 +148,7 @@ etcd:
 
 elasticsearch:
   enabled: false
+  maxUnavailable: false
 
 
 ########################################################################################

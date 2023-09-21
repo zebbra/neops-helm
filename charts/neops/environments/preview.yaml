@@ -70,7 +70,7 @@ elasticsearch:
 
   replicas: 3
   minimumMasterNodes: 2
-  maxUnavailable: 1
+  maxUnavailable: false
 
   antiAffinityTopologyKey: "kubernetes.io/hostname"
   antiAffinity: "soft"
@@ -136,6 +136,8 @@ redis:
     enabled: true
     interval: 15s
     namespace: neops
+  pdb:
+    create: false
 
 etcd:
   enabled: false
