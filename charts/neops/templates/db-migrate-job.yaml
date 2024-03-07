@@ -42,4 +42,8 @@ spec:
             {{- end }}
             - name: NEOPS_PLUGINS
               value: {{ .Values.config.NEOPS_PLUGINS | quote }}
+            - name: ELASTICSEARCH_AUTH_USERNAME
+              value: {{ .Values.secrets.ELASTICSEARCH_AUTH_USERNAME | quote }}
+            - name: ELASTICSEARCH_AUTH_PASSWORD
+              value: {{ .Values.secrets.ELASTICSEARCH_AUTH_PASSWORD | quote }}
 {{- end }}

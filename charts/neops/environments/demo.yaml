@@ -26,8 +26,12 @@ worker:
 secrets:
   DJANGO_SECRET_KEY: e068c0c112632ed803ab19011b45d7c3
   DATABASE_URL: postgres://neopsdemo:the-password-from-secret@neops-postgres.neops:5432/neopsdemo
+  # if -master not works for readis use -headless
   REDIS_URL: redis://neops-demo-redis-master:6379/0
-  ELASTICSEARCH_HOSTS: http://neops-demo-es-master:9200
+  ELASTICSEARCH_HOSTS: https://neops-demo-es-master:9200
+  ELASTICSEARCH_AUTH_PASSWORD: ooloa0hahT4oor6ree6e
+  ELASTICSEARCH_AUTH_USERNAME: elastic
+
 
 config:
   NEOPS_PLUGINS: "neops_cron neops_auth_django neops_permissions_simple"
@@ -39,6 +43,8 @@ config:
   ELASTICSEARCH_DSL_AUTOSYNC: true
   ELASTICSEARCH_DSL_FLUSH_CACHE_SIZE: 400
   SENTRY_ENVIRONMENT: demo
+  ELASTICSEARCH_SSL_VERIFY_DISABLE: "True"
+
 
 ingress:
   enabled: true

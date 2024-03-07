@@ -26,8 +26,12 @@ worker:
 secrets:
   DJANGO_SECRET_KEY: e068c0c112632ed803ab19011b45d7c3
   DATABASE_URL: postgres://neopspreview:the-password-from-secret@neops-postgres.neops:5432/neopspreview
+    # if -master not works for readis use -headless
   REDIS_URL: redis://neops-preview-redis-master:6379/0
-  ELASTICSEARCH_HOSTS: http://neops-preview-es-master:9200
+  ELASTICSEARCH_HOSTS: https://neops-preview-es-master:9200
+  ELASTICSEARCH_AUTH_PASSWORD: ooloa0hahT4oor6ree6e
+  ELASTICSEARCH_AUTH_USERNAME: elastic
+  ELASTICSEARCH_SSL_VERIFY_DISABLE: "True"
 
 config:
   NEOPS_PLUGINS: "neops_cron neops_auth_django neops_permissions_simple neops_reports"
