@@ -47,6 +47,12 @@ secrets:
   REDIS_URL: redis://neops-redis:6379/0
   ELASTICSEARCH_HOSTS: http://neops-es-master:9200
 
+logins:
+  - name: quay-registry
+    enabled: true
+    username: "leandrolerena"
+    password: "kind-password"
+
 # use existing secret instead of secrets from values
 existingSecret: ""
 
