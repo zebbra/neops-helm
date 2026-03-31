@@ -2,6 +2,24 @@
 
 Kubernetes deployment manifests for the [neops](https://neops.io) network automation platform. This repository contains three Helm charts that deploy the platform backend, web frontend, and a legacy component showcase.
 
+## Prerequisites
+
+Helm 3.x, kubectl, cluster access
+
+## Development
+
+```bash
+# Validate charts
+helm lint charts/neops
+helm lint charts/neops-web-client
+
+# Template render (dry-run)
+helm template my-release charts/neops -f charts/neops/values.yaml
+
+# Local testing with environment overlay
+helm template my-release charts/neops -f charts/neops/values.yaml -f charts/neops/environments/demo.yaml
+```
+
 ## Chart Structure
 
 ```
@@ -125,6 +143,14 @@ existingSecret: "my-neops-secrets"
 - **Worker image**: The Celery worker uses the same container image as the app. Set `image.tag` explicitly -- the worker template has no `appVersion` fallback.
 - **Hook jobs**: Database migration and Elasticsearch rebuild hooks run automatically. Disable with `hooks.enabled: false`.
 - **OpenVPN sidecar**: Enable with `openvpn.enabled: true`. Requires `NET_ADMIN` capability and a pre-existing ConfigMap (default name: `neops-openvpn`).
+
+## See Also
+
+See [AGENTS.md](AGENTS.md) for AI agent context, conventions, and gotchas.
+
+## Contributing
+
+Default branch: `main`. Branch from `main` for all changes. Run verification: `helm lint charts/neops && helm lint charts/neops-web-client`
 
 ## License
 

@@ -31,8 +31,13 @@ helm dependency update charts/neops
 helm upgrade --install neops charts/neops -f charts/neops/environments/demo.yaml
 ```
 
+## Verification
+
+`helm lint charts/neops && helm lint charts/neops-web-client`
+
 ## Conventions
 
+- Default branch is `main`. Branch from `main` for all changes.
 - Environment overlays live in `charts/<name>/environments/` (demo.yaml, preview.yaml)
 - Sub-charts are vendored as `.tgz` archives in `charts/neops/charts/`
 - Both app and worker Deployments share the same container image (`quay.io/zebbra/neops-core`)
