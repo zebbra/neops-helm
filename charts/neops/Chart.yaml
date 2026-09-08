@@ -1,46 +1,56 @@
 apiVersion: v2
 name: neops
-description: neops.io
-
-# A chart can be either an 'application' or a 'library' chart.
-#
-# Application charts are a collection of templates that can be packaged into versioned archives
-# to be deployed.
-#
-# Library charts provide useful utilities or functions for the chart developer. They're included as
-# a dependency of application charts to inject those utilities and functions into the rendering
-# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+description: NeOps platform umbrella (core, workflow engine, worker, web client, secure gateway, storage)
 type: application
+version: 0.1.0
+appVersion: "0.0.0"
 
-# This is the chart version. This version number should be incremented each time you make changes
-# to the chart and its templates, including the app version.
-# Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.1.3
-
-# This is the version number of the application being deployed. This version number should be
-# incremented each time you make changes to the application. Versions are not expected to
-# follow Semantic Versioning. They should reflect the version the application is using.
-# It is recommended to use it with quotes.
-appVersion: "latest"
-
+# NeOps subcharts are pinned to each repo's current latest tag. A chart appears on
+# Quay with that repo's next release; bump here when it does. The cutting-edge loop
+# (workspace-root `make deploy-cutting-edge`) packages the sibling charts under these
+# same versions locally and never needs Quay.
 dependencies:
-  - name: elasticsearch
-    # version: 7.16.3
-    version: 8.5.1
-    repository: https://helm.elastic.co
-    condition: elasticsearch.enabled
-  - name: kibana
-    # version: 7.16.3
-    version: 8.5.1
-    repository: https://helm.elastic.co
-    condition: kibana.enabled
+  - name: postgresql
+    version: "18.8.17"
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: postgresql.enabled
   - name: redis
-    #version: 15.3.2
-    version: 18.0.4
-    repository: https://charts.bitnami.com/bitnami
+    version: "28.0.15"
+    repository: oci://registry-1.docker.io/bitnamicharts
     condition: redis.enabled
-  - name: etcd
-    version: 9.5.0
-    #version: 6.8.0
-    repository: https://charts.bitnami.com/bitnami
-    condition: etcd.enabled
+  - name: elasticsearch
+    version: "21.5.0"
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: elasticsearch.enabled
+  - name: minio
+    version: "17.0.21"
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: minio.enabled
+  - name: neops-core
+    version: "2.1.0-beta.2"
+    repository: oci://quay.io/zebbra/charts
+    condition: neops-core.enabled
+  - name: neops-workflow-engine
+    version: "0.43.0-beta.1"
+    repository: oci://quay.io/zebbra/charts
+    condition: neops-workflow-engine.enabled
+  - name: neops-monitor-app
+    version: "0.43.0-beta.1"
+    repository: oci://quay.io/zebbra/charts
+    condition: neops-monitor-app.enabled
+  - name: neops-worker
+    version: "0.2.0-beta.4"
+    repository: oci://quay.io/zebbra/charts
+    condition: neops-worker.enabled
+  - name: neops-web-client
+    version: "4.0.1-beta.3"
+    repository: oci://quay.io/zebbra/charts
+    condition: neops-web-client.enabled
+  - name: neops-secure-gateway
+    version: "0.4.1-beta.1"
+    repository: oci://quay.io/zebbra/charts
+    condition: neops-secure-gateway.enabled
+  - name: neops-storage
+    version: "0.0.8-beta.6"
+    repository: oci://quay.io/zebbra/charts
+    condition: neops-storage.enabled
