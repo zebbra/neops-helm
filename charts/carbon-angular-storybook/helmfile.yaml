@@ -1,5 +1,0 @@
-releases:
-  - name: angular-storybook
-    namespace: neops
-    chart: ./
-    values: [./values.yaml]
