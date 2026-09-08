@@ -1,2 +1,4 @@
+.env
+jwt/
 charts/neops/charts/
 charts/neops/Chart.lock
