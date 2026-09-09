@@ -1,4 +1,5 @@
 .env
+cms_api_key.env
 jwt/
 charts/neops/charts/
 charts/neops/Chart.lock
