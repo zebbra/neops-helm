@@ -1,0 +1,189 @@
+# KIND-only overrides. Every credential here is `unsafe` on purpose: never reuse
+# this file for any non-KIND environment. Images are the ones the workspace-root
+# `make deploy-cutting-edge` builds and kind-loads (local names, tag cutting-edge).
+
+# Shared values for the service blocks below. A leading `_` matches no subchart name,
+# so Helm ignores these keys; the aliases resolve at parse time.
+_cuttingEdgeImage: &cuttingEdgeImage
+  tag: cutting-edge
+  pullPolicy: IfNotPresent
+_nginxIngress: &nginxIngress
+  enabled: true
+  className: nginx
+_rootPath: &rootPath
+  - path: /
+    pathType: Prefix
+
+# Required by the Bitnami charts once their images are swapped to bitnamilegacy/*.
+global:
+  security:
+    allowInsecureImages: true
+
+postgresql:
+  image:
+    repository: bitnamilegacy/postgresql
+    tag: 17.6.0-debian-12-r4
+  auth:
+    password: unsafe
+    postgresPassword: unsafe
+  primary:
+    persistence:
+      size: 2Gi
+    resourcesPreset: small
+    # Measured, not guessed: at the stock 100 the pool ran dry with 99 in use, 90 of
+    # them idle connections held by the single core app pod (uvicorn, 4 workers,
+    # persistent Django connections), and the web client failed with
+    # "remaining connection slots are reserved for roles with the SUPERUSER attribute".
+    extendedConfiguration: |
+      max_connections = 300
+
+redis:
+  image:
+    repository: bitnamilegacy/redis
+    tag: 8.2.1-debian-12-r0
+  master:
+    persistence:
+      enabled: false
+
+elasticsearch:
+  image:
+    repository: bitnamilegacy/elasticsearch
+    tag: 8.17.4-debian-12-r4
+  sysctlImage:
+    repository: bitnamilegacy/os-shell
+    tag: 12-debian-12-r51
+  master:
+    heapSize: 1g
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1536Mi
+      limits:
+        memory: 2560Mi
+    persistence:
+      size: 2Gi
+
+# Inert until `minio.enabled` is true in values.yaml; kept so enabling storage works.
+minio:
+  image:
+    repository: bitnamilegacy/minio
+    tag: 2025.7.23-debian-12-r5
+  auth:
+    rootPassword: unsafe
+  persistence:
+    size: 2Gi
+
+neops-core:
+  image:
+    repository: neops-core
+    <<: *cuttingEdgeImage
+  env:
+    DEBUG: "True"
+    CORS_ORIGIN_ALLOW_ALL: "True"
+  secrets:
+    DJANGO_SECRET_KEY: unsafe
+    DJANGO_SUPERUSER_PASSWORD: neops
+    # postgres://neops:<postgresql.auth.password>@neops-postgresql:5432/neops — the
+    # password is repeated here, in postgresql.auth and in the engine's POSTGRES_PASSWORD.
+    DATABASE_URL: postgres://neops:unsafe@neops-postgresql:5432/neops
+  superuser:
+    enabled: true
+    username: neops
+    email: neops@neops.io
+  ingress:
+    <<: *nginxIngress
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: 200m
+    hosts:
+      - host: cms.neops.lerena.cloud
+        paths: *rootPath
+      - host: cms.neops.local
+        paths: *rootPath
+
+neops-workflow-engine:
+  image:
+    repository: neops-workflow-engine
+    <<: *cuttingEdgeImage
+  env:
+    DEBUG: "true"
+    LOG_FORMAT: pretty
+  secrets:
+    POSTGRES_PASSWORD: unsafe
+    # NEOPS_CMS_TOKEN is minted by `make cms-token` and passed on the command line.
+  ingress:
+    <<: *nginxIngress
+    hosts:
+      - host: engine.neops.lerena.cloud
+        paths: *rootPath
+      - host: engine.neops.local
+        paths: *rootPath
+
+neops-monitor-app:
+  image:
+    repository: neops-monitor-app
+    <<: *cuttingEdgeImage
+  env:
+    ENGINE_BASE_URL: https://engine.neops.lerena.cloud
+  ingress:
+    <<: *nginxIngress
+    hosts:
+      - host: workflows.neops.lerena.cloud
+        paths: *rootPath
+      - host: workflows.neops.local
+        paths: *rootPath
+
+neops-worker:
+  image:
+    repository: neops-worker-sdk
+    <<: *cuttingEdgeImage
+
+neops-web-client:
+  image:
+    repository: neops-web-client
+    <<: *cuttingEdgeImage
+  env:
+    FRONTEND_GRAPHQL_ENDPOINT: https://cms.neops.lerena.cloud/graphql
+    # Answers only once `neops-storage.enabled` is true; nothing serves this host before then.
+    FRONTEND_FILEAPI_ENDPOINT: https://storage.neops.lerena.cloud/
+    FRONTEND_WORKFLOW_MANAGER_URL: https://workflows.neops.lerena.cloud
+    FRONTEND_DEVMODE: "true"
+  ingress:
+    <<: *nginxIngress
+    hosts:
+      - host: neops.lerena.cloud
+        paths: *rootPath
+      - host: neops.local
+        paths: *rootPath
+
+neops-secure-gateway:
+  image:
+    repository: quay.io/zebbra/neops-secure-gateway
+    <<: *cuttingEdgeImage
+  secrets:
+    SECRET_KEY: unsafe
+    # STATIC_AUTH_TOKEN is minted by `make cms-token` and passed on the command line.
+  ingress:
+    <<: *nginxIngress
+    hosts:
+      - host: gateway.neops.lerena.cloud
+        paths: *rootPath
+      - host: gateway.neops.local
+        paths: *rootPath
+
+# Inert until `neops-storage.enabled` is true in values.yaml; nothing below is deployed.
+neops-storage:
+  image:
+    repository: neops-storage
+    <<: *cuttingEdgeImage
+  secrets:
+    S3_ACCESS_KEY: neops
+    S3_SECRET_KEY: unsafe
+    JWT_SIGN_KEY: unsafe-jwt-sign-key-for-kind-only
+    ADMIN_PASSWORD_HASH: ""
+  ingress:
+    <<: *nginxIngress
+    hosts:
+      - host: storage.neops.lerena.cloud
+        paths: *rootPath
+      - host: storage.neops.local
+        paths: *rootPath
