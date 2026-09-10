@@ -6,7 +6,7 @@ jwt/
 
 charts/neops/charts/
 charts/neops/Chart.lock
-tmpcharts/
+tmpcharts*/
 *.tgz
 
 *.pem
