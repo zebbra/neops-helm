@@ -5,6 +5,8 @@ if [ -f .env ]; then set -a; . ./.env; set +a; fi
 : "${QUAY_USER:=}" "${QUAY_TOKEN:=}"
 if [ -f cms_api_key.env ]; then set -a; . ./cms_api_key.env; set +a; fi
 
+# Core signs its tokens with this keypair and the engine verifies them with the
+# public half, refusing to boot without it.
 if [ ! -f jwt/private.pem ] || [ ! -f jwt/public.pem ]; then
   mkdir -p jwt
   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt/private.pem
@@ -36,6 +38,7 @@ helm upgrade --install neops charts/neops --namespace "$NAMESPACE" --create-name
   --timeout 15m \
   --values charts/neops/values-kind.yaml \
   --set-file neops-core.jwt.privateKey=jwt/private.pem --set-file neops-core.jwt.publicKey=jwt/public.pem \
+  --set-file neops-workflow-engine.secrets.NEOPS_JWT_PUBLIC_KEY=jwt/public.pem \
   --set-string "registry.username=$QUAY_USER" --set-string "registry.password=$QUAY_TOKEN" \
   "${token_args[@]}"
 
