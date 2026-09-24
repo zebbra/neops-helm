@@ -1,3 +1,5 @@
+include .make_scripts/project-infrastructure/project-infrastructure-makefile
+# This includes make: sync-infrastructure-assets, github_autodelete_merged_branches, github_set_branch_protections and github_set_default_branch
 # NeOps umbrella chart + local KIND loop. Every target is a thin wrapper over
 # .make-scripts/<target>.sh. The KIND cluster `kind` is shared with other
 # projects: NeOps lives in namespace `neops` and never deletes the cluster.
