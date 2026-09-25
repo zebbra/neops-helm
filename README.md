@@ -37,5 +37,6 @@ The KIND cluster `kind` is shared with other projects; NeOps installs into names
 The engine and gateway authenticate against core with an API key that only exists once
 core is running: `make cms-token` mints it into the gitignored `cms_api_key.env`, and
 `make local-upgrade` passes it along whenever that file exists. That same step mints a dev
-JWT keypair into the gitignored `jwt/` and hands both PEMs to core with `--set-file`; a real
-environment supplies its own PEMs the same way.
+JWT keypair into the gitignored `jwt/`, hands both PEMs to core with `--set-file` and the
+public one to the engine, which verifies core's tokens with it; a real environment supplies
+its own PEMs the same way.
