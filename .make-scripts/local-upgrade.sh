@@ -3,7 +3,104 @@ set -euo pipefail
 NAMESPACE=${NAMESPACE:-neops}
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
 : "${QUAY_USER:=}" "${QUAY_TOKEN:=}"
+: "${KIND_DOMAIN:=neops.local}" "${KIND_SCHEME:=http}"
 if [ -f cms_api_key.env ]; then set -a; . ./cms_api_key.env; set +a; fi
+
+if [[ "$KIND_SCHEME" != "http" && "$KIND_SCHEME" != "https" ]]; then
+  echo "error: invalid KIND_SCHEME '$KIND_SCHEME': must be 'http' or 'https'" >&2
+  exit 1
+fi
+if ! [[ "$KIND_DOMAIN" =~ ^[a-zA-Z0-9.-]+$ ]]; then
+  echo "error: invalid KIND_DOMAIN '$KIND_DOMAIN': must match ^[a-zA-Z0-9.-]+$" >&2
+  exit 1
+fi
+
+render_domain_values() {
+  cat <<EOF
+neops-core:
+  env:
+    DJANGO_ALLOWED_HOSTS: cms.${KIND_DOMAIN},cms.neops.local,neops-neops-core
+  ingress:
+    hosts:
+      - host: cms.${KIND_DOMAIN}
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: cms.neops.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+neops-workflow-engine:
+  env:
+    NEOPS_CORS_ORIGINS: ${KIND_SCHEME}://${KIND_DOMAIN},${KIND_SCHEME}://workflows.${KIND_DOMAIN},http://neops.local,http://workflows.neops.local
+  ingress:
+    hosts:
+      - host: engine.${KIND_DOMAIN}
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: engine.neops.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+neops-monitor-app:
+  env:
+    ENGINE_BASE_URL: ${KIND_SCHEME}://engine.${KIND_DOMAIN}
+    WEBCLIENT_ORIGIN: ${KIND_SCHEME}://${KIND_DOMAIN}
+  ingress:
+    hosts:
+      - host: workflows.${KIND_DOMAIN}
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: workflows.neops.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+neops-web-client:
+  env:
+    FRONTEND_GRAPHQL_ENDPOINT: ${KIND_SCHEME}://cms.${KIND_DOMAIN}/graphql
+    FRONTEND_FILEAPI_ENDPOINT: ${KIND_SCHEME}://storage.${KIND_DOMAIN}/
+    FRONTEND_WORKFLOW_MANAGER_URL: ${KIND_SCHEME}://workflows.${KIND_DOMAIN}
+  ingress:
+    hosts:
+      - host: ${KIND_DOMAIN}
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: neops.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+neops-secure-gateway:
+  ingress:
+    hosts:
+      - host: gateway.${KIND_DOMAIN}
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: gateway.neops.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+neops-storage:
+  ingress:
+    hosts:
+      - host: storage.${KIND_DOMAIN}
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: storage.neops.local
+        paths:
+          - path: /
+            pathType: Prefix
+EOF
+}
 
 get_container_image() {
   local target=$1
@@ -102,9 +199,15 @@ if helm status neops -n "$NAMESPACE" >/dev/null 2>&1; then
   before_es_image=$(get_container_image "app.kubernetes.io/name=elasticsearch,app.kubernetes.io/component=master" "elasticsearch")
 fi
 
+domain_args=()
+if [ "$KIND_DOMAIN" != "neops.local" ] || [ "$KIND_SCHEME" != "http" ]; then
+  domain_args=(--values <(render_domain_values))
+fi
+
 helm upgrade --install neops charts/neops --namespace "$NAMESPACE" --create-namespace \
   --timeout 15m \
   --values charts/neops/values-kind.yaml \
+  "${domain_args[@]}" \
   --set-file neops-core.jwt.privateKey=jwt/private.pem --set-file neops-core.jwt.publicKey=jwt/public.pem \
   --set-file neops-workflow-engine.secrets.NEOPS_JWT_PUBLIC_KEY=jwt/public.pem \
   --set-string "registry.username=$QUAY_USER" --set-string "registry.password=$QUAY_TOKEN" \
