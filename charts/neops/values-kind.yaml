@@ -80,6 +80,8 @@ neops-core:
   env:
     DEBUG: "True"
     CORS_ORIGIN_ALLOW_ALL: "True"
+    # The ingress hosts below plus the in-cluster Service name from values.yaml.
+    DJANGO_ALLOWED_HOSTS: cms.neops.lerena.cloud,cms.neops.local,neops-neops-core
   secrets:
     DJANGO_SECRET_KEY: unsafe
     DJANGO_SUPERUSER_PASSWORD: neops
