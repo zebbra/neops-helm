@@ -8,8 +8,9 @@ Umbrella Helm chart for the NeOps platform plus a local KIND loop.
 `elasticsearch` and `minio`. `values.yaml` holds in-cluster wiring only; every credential
 comes from an environment values file. `values-kind.yaml` is the KIND environment: all
 credentials are `unsafe`, images are the locally built `cutting-edge` tags, and every
-service is published under both a public `*.neops.lerena.cloud` name and a `*.neops.local`
-one.
+service defaults to `http://*.neops.local`. Setting `KIND_DOMAIN` and `KIND_SCHEME` in
+`.env` (e.g. `KIND_DOMAIN=neops.example.com`, `KIND_SCHEME=https`) publishes the release
+under both `*.${KIND_DOMAIN}` and `*.neops.local`.
 
 ## Local loop
 
@@ -24,11 +25,12 @@ Working tree instead of Quay: from the workspace root run `make deploy-cutting-e
 `make local-deploy` here). No registry is involved, so that flow needs no `.env` — the
 credentials above are only for pulling the images and charts from Quay.
 
-The KIND values publish `neops.lerena.cloud` and the `cms`, `engine`, `workflows` and
-`gateway` subdomains through an external proxy that terminates TLS, so the charts themselves
-serve plain HTTP and carry no `tls:` section. Each has a `.local` twin for the offline path.
-`storage.` is declared alongside them but is not served until `neops-storage.enabled` is
-turned on.
+The default KIND values publish `neops.local` and the `cms`, `engine`, `workflows` and
+`gateway` subdomains over HTTP without a `tls:` section. When `KIND_DOMAIN` is set in
+`.env`, `make local-upgrade` and `make local-deploy` automatically generate overrides so
+each service serves both its `${KIND_DOMAIN}` host (for access through an external reverse
+proxy terminating TLS) and its `.neops.local` host (for `make config-hosts`). `storage.` is
+declared alongside them but is not served until `neops-storage.enabled` is turned on.
 
 The KIND cluster `kind` is shared with other projects; NeOps installs into namespace
 `neops` and `make local-clean` only removes that namespace. Every target lives in

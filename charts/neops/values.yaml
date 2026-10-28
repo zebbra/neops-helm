@@ -92,12 +92,13 @@ neops-workflow-engine:
     POSTGRES_PASSWORD: ""
     NEOPS_CMS_TOKEN: ""
 
-# The workflow manager UI. ENGINE_BASE_URL is browser-facing: set it per environment.
+# The workflow manager UI. ENGINE_BASE_URL and WEBCLIENT_ORIGIN are browser-facing: set them per environment.
 neops-monitor-app:
   enabled: true
   imagePullSecrets: *quayPullSecret
   env:
     ENGINE_BASE_URL: ""
+    WEBCLIENT_ORIGIN: ""
 
 neops-worker:
   enabled: true

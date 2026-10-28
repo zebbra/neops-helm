@@ -81,7 +81,7 @@ neops-core:
     DEBUG: "True"
     CORS_ORIGIN_ALLOW_ALL: "True"
     # The ingress hosts below plus the in-cluster Service name from values.yaml.
-    DJANGO_ALLOWED_HOSTS: cms.neops.lerena.cloud,cms.neops.local,neops-neops-core
+    DJANGO_ALLOWED_HOSTS: cms.neops.local,neops-neops-core
   secrets:
     DJANGO_SECRET_KEY: unsafe
     DJANGO_SUPERUSER_PASSWORD: neops
@@ -97,8 +97,6 @@ neops-core:
     annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: 200m
     hosts:
-      - host: cms.neops.lerena.cloud
-        paths: *rootPath
       - host: cms.neops.local
         paths: *rootPath
 
@@ -110,15 +108,13 @@ neops-workflow-engine:
     DEBUG: "true"
     LOG_FORMAT: pretty
     # The engine serves same-origin only without this; the monitor and the web client call it cross-origin.
-    NEOPS_CORS_ORIGINS: https://neops.lerena.cloud,https://workflows.neops.lerena.cloud,http://neops.local,http://workflows.neops.local
+    NEOPS_CORS_ORIGINS: http://neops.local,http://workflows.neops.local
   secrets:
     POSTGRES_PASSWORD: unsafe
     # NEOPS_CMS_TOKEN is minted by `make cms-token` and passed on the command line.
   ingress:
     <<: *nginxIngress
     hosts:
-      - host: engine.neops.lerena.cloud
-        paths: *rootPath
       - host: engine.neops.local
         paths: *rootPath
 
@@ -127,12 +123,11 @@ neops-monitor-app:
     repository: neops-monitor-app
     <<: *cuttingEdgeImage
   env:
-    ENGINE_BASE_URL: https://engine.neops.lerena.cloud
+    ENGINE_BASE_URL: http://engine.neops.local
+    WEBCLIENT_ORIGIN: http://neops.local
   ingress:
     <<: *nginxIngress
     hosts:
-      - host: workflows.neops.lerena.cloud
-        paths: *rootPath
       - host: workflows.neops.local
         paths: *rootPath
 
@@ -146,16 +141,14 @@ neops-web-client:
     repository: neops-web-client
     <<: *cuttingEdgeImage
   env:
-    FRONTEND_GRAPHQL_ENDPOINT: https://cms.neops.lerena.cloud/graphql
+    FRONTEND_GRAPHQL_ENDPOINT: http://cms.neops.local/graphql
     # Answers only once `neops-storage.enabled` is true; nothing serves this host before then.
-    FRONTEND_FILEAPI_ENDPOINT: https://storage.neops.lerena.cloud/
-    FRONTEND_WORKFLOW_MANAGER_URL: https://workflows.neops.lerena.cloud
+    FRONTEND_FILEAPI_ENDPOINT: http://storage.neops.local/
+    FRONTEND_WORKFLOW_MANAGER_URL: http://workflows.neops.local
     FRONTEND_DEVMODE: "true"
   ingress:
     <<: *nginxIngress
     hosts:
-      - host: neops.lerena.cloud
-        paths: *rootPath
       - host: neops.local
         paths: *rootPath
 
@@ -169,8 +162,6 @@ neops-secure-gateway:
   ingress:
     <<: *nginxIngress
     hosts:
-      - host: gateway.neops.lerena.cloud
-        paths: *rootPath
       - host: gateway.neops.local
         paths: *rootPath
 
@@ -187,7 +178,5 @@ neops-storage:
   ingress:
     <<: *nginxIngress
     hosts:
-      - host: storage.neops.lerena.cloud
-        paths: *rootPath
       - host: storage.neops.local
         paths: *rootPath
