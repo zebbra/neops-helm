@@ -106,8 +106,8 @@ get_container_image() {
   local target=$1
   local container=$2
   local get_args=(-l "$target")
-  if [[ "$target" == pod/* || "$target" == pod\ * ]]; then
-    get_args=("$target")
+  if [[ "$target" == pod/* ]]; then
+    get_args=("${target#pod/}")
   fi
   local img
   img=$(kubectl -n "$NAMESPACE" get pod "${get_args[@]}" -o json 2>/dev/null \
