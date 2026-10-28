@@ -80,6 +80,8 @@ neops-core:
   env:
     DEBUG: "True"
     CORS_ORIGIN_ALLOW_ALL: "True"
+    # The ingress hosts below plus the in-cluster Service name from values.yaml.
+    DJANGO_ALLOWED_HOSTS: cms.neops.lerena.cloud,cms.neops.local,neops-neops-core
   secrets:
     DJANGO_SECRET_KEY: unsafe
     DJANGO_SUPERUSER_PASSWORD: neops
@@ -107,6 +109,8 @@ neops-workflow-engine:
   env:
     DEBUG: "true"
     LOG_FORMAT: pretty
+    # The engine serves same-origin only without this; the monitor and the web client call it cross-origin.
+    NEOPS_CORS_ORIGINS: https://neops.lerena.cloud,https://workflows.neops.lerena.cloud,http://neops.local,http://workflows.neops.local
   secrets:
     POSTGRES_PASSWORD: unsafe
     # NEOPS_CMS_TOKEN is minted by `make cms-token` and passed on the command line.
