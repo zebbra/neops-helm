@@ -27,7 +27,7 @@ dependencies:
     repository: oci://registry-1.docker.io/bitnamicharts
     condition: minio.enabled
   - name: neops-core
-    version: "2.2.1-beta.5"
+    version: "2.2.1-beta.7"
     repository: oci://quay.io/zebbra/charts
     condition: neops-core.enabled
   - name: neops-workflow-engine

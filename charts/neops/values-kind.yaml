@@ -110,7 +110,7 @@ neops-workflow-engine:
     DEBUG: "true"
     LOG_FORMAT: pretty
     # The engine serves same-origin only without this; the monitor and the web client call it cross-origin.
-    NEOPS_CORS_ORIGINS: https://neops.lerena.cloud,https://workflows.neops.lerena.cloud
+    NEOPS_CORS_ORIGINS: https://neops.lerena.cloud,https://workflows.neops.lerena.cloud,http://neops.local,http://workflows.neops.local
   secrets:
     POSTGRES_PASSWORD: unsafe
     # NEOPS_CMS_TOKEN is minted by `make cms-token` and passed on the command line.
