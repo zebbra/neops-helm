@@ -45,6 +45,11 @@ elasticsearch:
     replicaCount: 0
   ingest:
     replicaCount: 0
+  # A write in a rebuild's delete->create gap would auto-create a Neops index with a dynamic
+  # mapping that breaks search. Explicit creation is unaffected. devices/interfaces: older cores.
+  extraConfig:
+    action:
+      auto_create_index: "-network,-devices,-interfaces,-groups,-clients,-executions,-*_lookup,+*"
 
 minio:
   enabled: false
