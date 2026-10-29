@@ -45,7 +45,7 @@ its own PEMs the same way.
 
 ## Upgrading core
 
-From core chart 2.2.1-beta.9 on, core's post-upgrade migrate Job rebuilds the search indices this
+With core chart 2.2.1-beta.9, which this chart pins, core's post-upgrade migrate Job rebuilds the search indices this
 core or this Elasticsearch version did not build. The first upgrade to it rebuilds all of them,
 and search is down until the Job finishes. Helm's default `--timeout` (5m) is shorter than the
 Job's default deadline (`neops-core.migrate.activeDeadlineSeconds`, 900 s), so on a real
@@ -54,4 +54,5 @@ this upgrade, for example
 `helm upgrade ... --timeout 35m --set neops-core.migrate.activeDeadlineSeconds=1800`. Core's
 release notes ("The rebuild runs on upgrade" in
 [`docs/releases/unreleased.md`](https://github.com/zebbra/neops-core/blob/develop/docs/releases/unreleased.md#the-rebuild-runs-on-upgrade-and-search-is-down-while-it-runs)
-until 2.2.1 is released) cover sizing, the Job's log and going back.
+until 2.2.1 is released) cover sizing and the Job's log; going back is under "Going back to an
+earlier release" there.
