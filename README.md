@@ -45,9 +45,9 @@ its own PEMs the same way.
 
 ## Upgrading core
 
-With core chart 2.2.1-beta.9, which this chart pins, core's post-upgrade migrate Job rebuilds the search indices this
-core or this Elasticsearch version did not build. The first upgrade to it rebuilds all of them,
-and search is down until the Job finishes. Helm's default `--timeout` (5m) is shorter than the
+Since core chart 2.2.1-beta.9, core's post-upgrade migrate Job rebuilds the search indices this
+core or this Elasticsearch version did not build. The first upgrade to such a core rebuilds all of
+them, and search is down until the Job finishes. Helm's default `--timeout` (5m) is shorter than the
 Job's default deadline (`neops-core.migrate.activeDeadlineSeconds`, 900 s), so on a real
 inventory raise both, the timeout a few minutes above the deadline, and leave `--atomic` off for
 this upgrade, for example
