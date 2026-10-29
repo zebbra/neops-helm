@@ -1,11 +1,11 @@
 apiVersion: v2
 name: neops
-description: NeOps platform umbrella (core, workflow engine, worker, web client, secure gateway, storage)
+description: Neops platform umbrella (core, workflow engine, worker, web client, secure gateway, storage)
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "0.0.0"
 
-# NeOps subcharts are pinned to each repo's current latest tag. A chart appears on
+# Neops subcharts are pinned to each repo's current latest tag. A chart appears on
 # Quay with that repo's next release; bump here when it does. The cutting-edge loop
 # (workspace-root `make deploy-cutting-edge`) packages the sibling charts under these
 # same versions locally and never needs Quay.
@@ -27,30 +27,30 @@ dependencies:
     repository: oci://registry-1.docker.io/bitnamicharts
     condition: minio.enabled
   - name: neops-core
-    version: "2.2.1-beta.9"
+    version: "2.3.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-core.enabled
   - name: neops-workflow-engine
-    version: "0.43.0-beta.10"
+    version: "0.44.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-workflow-engine.enabled
   - name: neops-monitor-app
-    version: "0.43.0-beta.10"
+    version: "0.44.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-monitor-app.enabled
   - name: neops-worker
-    version: "0.2.0-beta.8"
+    version: "0.3.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-worker.enabled
   - name: neops-web-client
-    version: "6.0.0-beta.2"
+    version: "6.0.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-web-client.enabled
   - name: neops-secure-gateway
-    version: "0.4.1-beta.2"
+    version: "0.4.1"
     repository: oci://quay.io/zebbra/charts
     condition: neops-secure-gateway.enabled
   - name: neops-storage
-    version: "0.0.8-beta.7"
+    version: "0.0.8"
     repository: oci://quay.io/zebbra/charts
     condition: neops-storage.enabled
