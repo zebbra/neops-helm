@@ -12,6 +12,9 @@ service defaults to `http://*.neops.local`. Setting `KIND_DOMAIN` and `KIND_SCHE
 `.env` (e.g. `KIND_DOMAIN=neops.example.com`, `KIND_SCHEME=https`) publishes the release
 under both `*.${KIND_DOMAIN}` and `*.neops.local`.
 
+Quote numeric values under the workflow engine's `env:`, e.g. `BLACKBOARD_PENDING_JOB_TIMEOUT: "3600000"`:
+Helm renders an unquoted large integer as `3.6e+06`, which engine 0.44.1 and later refuse at boot.
+
 ## Local loop
 
 ```bash
