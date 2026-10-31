@@ -81,7 +81,9 @@ name and namespace, both `neops` here; adjust them if yours differ.
 - **Two workers per zone.** A rollback goes back to the forward job's zone, and the worker it
   needs is often the one that just died. A zone with one worker also holds up its runs during
   every restart of that worker. Hence `replicaCount=2` above; give the central worker the same
-  with `--set neops-worker.replicaCount=2` on the umbrella.
+  with `--set neops-worker.replicaCount=2` on the umbrella. The developer-preview engine caps
+  an installation at 2 workers, so a zones setup with more workers needs the licensed engine,
+  the image the neops-workflow-engine chart defaults to.
 - **Order.** Create the zone first, on the web client's Network zones page, which needs web
   client 6.1.0 and write on the `network-zones` permission element. The `networkZoneUpsert`
   mutation needs the same write, and Django admin works too. No worker needs to be up for
