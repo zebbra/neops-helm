@@ -82,10 +82,11 @@ name and namespace, both `neops` here; adjust them if yours differ.
   needs is often the one that just died. A zone with one worker also holds up its runs during
   every restart of that worker. Hence `replicaCount=2` above; give the central worker the same
   with `--set neops-worker.replicaCount=2` on the umbrella.
-- **Order.** Create the zone first, in Django admin or with the `networkZoneUpsert` mutation;
-  no worker needs to be up for that. A zone's workers are refused at registration while the
-  zone doesn't exist. Once any zone besides `default` exists, a worker that lists no zones is
-  refused at its next start.
+- **Order.** Create the zone first, on the web client's Network zones page, which needs web
+  client 6.1.0 and write on the `network-zones` permission element. The `networkZoneUpsert`
+  mutation needs the same write, and Django admin works too. No worker needs to be up for
+  that. A zone's workers are refused at registration while the zone doesn't exist. Once any
+  zone besides `default` exists, a worker that lists no zones is refused at its next start.
 - **Networking.** A zone's management ranges must not overlap the cluster's pod and service
   ranges as seen from that zone's nodes. Giving a remote site's nodes a network path to the
   engine's worker routes, which are unauthenticated, is the operator's job; this chart adds none.
