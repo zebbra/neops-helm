@@ -46,6 +46,25 @@ JWT keypair into the gitignored `jwt/`, hands both PEMs to core with `--set-file
 public one to the engine, which verifies core's tokens with it; a real environment supplies
 its own PEMs the same way.
 
+## The superuser's role
+
+With `neops-core.superuser.enabled` (on in `values-kind.yaml`), core's migrate hook creates
+the Django superuser. From core 2.4.0 the same hook gives it the Neops role
+`neops-core.superuser.role` (default `admin`) on every install and upgrade:
+
+- write on the scope `Global`;
+- the workflow `admin` profile of core's `grant_workflow_permissions`;
+- write on the `network-zones` permission element, so the superuser can create zones.
+
+That is what neops-docker-compose's `cms-init` does, plus the zone grant. Without the role, the
+superuser can log in and then read and write nothing. The hook re-applies these grants on every
+upgrade, so a grant taken away from that role by hand comes back.
+
+Other users who create zones need write on `network-zones` in a role of their own: grant it in
+Django admin under *Role permission elements*. Never work around a missing grant by starting a
+site's workers with `default`: a site's worker that serves `default` reaches the default
+network's addresses, with their devices' credentials, from inside the site's network.
+
 ## Network zones
 
 A worker claims only the jobs of the network zones it lists in `NEOPS_WORKER_NETWORK_ZONES`.
