@@ -2,7 +2,7 @@ apiVersion: v2
 name: neops
 description: Neops platform umbrella (core, workflow engine, worker, web client, secure gateway, storage)
 type: application
-version: 0.2.1
+version: 0.3.0
 appVersion: "0.0.0"
 
 # Neops subcharts are pinned to each repo's current latest tag. A chart appears on
@@ -27,23 +27,23 @@ dependencies:
     repository: oci://registry-1.docker.io/bitnamicharts
     condition: minio.enabled
   - name: neops-core
-    version: "2.3.0"
+    version: "2.4.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-core.enabled
   - name: neops-workflow-engine
-    version: "0.44.1"
+    version: "0.45.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-workflow-engine.enabled
   - name: neops-monitor-app
-    version: "0.44.1"
+    version: "0.45.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-monitor-app.enabled
   - name: neops-worker
-    version: "0.3.0"
+    version: "0.4.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-worker.enabled
   - name: neops-web-client
-    version: "6.0.1"
+    version: "6.1.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-web-client.enabled
   - name: neops-secure-gateway
