@@ -52,13 +52,13 @@ With `neops-core.superuser.enabled` (on in `values-kind.yaml`), core's migrate h
 the Django superuser. From core 2.4.0 the same hook gives it the Neops role
 `neops-core.superuser.role` (default `admin`) on every install and upgrade:
 
-- write on the scope `Global`;
-- the workflow `admin` profile of core's `grant_workflow_permissions`;
-- write on the `network-zones` permission element, so the superuser can create zones.
+- write on the scope `Global` and on the `network-zones` permission element, so the superuser
+  can create zones (core's `manage.py bootstrap_admin_role`);
+- the workflow `admin` profile (core's `manage.py grant_workflow_permissions`).
 
-That is what neops-docker-compose's `cms-init` does, plus the zone grant. Without the role, the
-superuser can log in and then read and write nothing. The hook re-applies these grants on every
-upgrade, so a grant taken away from that role by hand comes back.
+neops-docker-compose's `cms-init` runs the same two commands. Without the role, the superuser
+can log in and then read and write nothing. The seed re-applies every grant on every install and
+upgrade, so a grant removed from that role by hand comes back.
 
 Other users who create zones need write on `network-zones` in a role of their own: grant it in
 Django admin under *Role permission elements*. Never work around a missing grant by starting a
