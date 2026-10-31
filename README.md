@@ -75,6 +75,14 @@ helm install neops-worker-b oci://quay.io/zebbra/charts/neops-worker --namespace
 The namespace and the `neops-neops-workflow-engine` host follow from the umbrella's release
 name and namespace, both `neops` here; adjust them if yours differ.
 
+On KIND, run the zone's release on the worker image the umbrella's KIND values use, the
+locally built one, instead of the Quay image the chart defaults to:
+
+```bash
+  --set image.repository=neops-worker-sdk \
+  --set image.tag=cutting-edge
+```
+
 - **Several zones.** `--set` splits on commas, so escape them and single-quote the argument,
   or the shell drops the backslash: `--set 'env.NEOPS_WORKER_NETWORK_ZONES=default\,zone-b'`.
   List several zones on one worker only if their addresses don't overlap from that node.
