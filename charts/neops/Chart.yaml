@@ -43,7 +43,7 @@ dependencies:
     repository: oci://quay.io/zebbra/charts
     condition: neops-worker.enabled
   - name: neops-web-client
-    version: "6.0.1"
+    version: "6.1.0"
     repository: oci://quay.io/zebbra/charts
     condition: neops-web-client.enabled
   - name: neops-secure-gateway
