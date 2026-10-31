@@ -87,6 +87,12 @@ name and namespace, both `neops` here; adjust them if yours differ.
   mutation needs the same write, and Django admin works too. No worker needs to be up for
   that. A zone's workers are refused at registration while the zone doesn't exist. Once any
   zone besides `default` exists, a worker that lists no zones is refused at its next start.
+- **Retiring a site.** First move the zone's devices to another zone with
+  `device_update_device`, or delete them. If the site is already unreachable, give that step
+  `networkZone: { name: <a live zone>, override: true }`, or delete the devices in Django admin,
+  which needs no worker; otherwise the step waits up to an hour for a worker that never comes
+  and holds other runs meanwhile. Then `helm uninstall` the zone's worker release, and last
+  delete the zone, on the Network zones page or in Django admin, once no workflow run names it.
 - **Networking.** A zone's management ranges must not overlap the cluster's pod and service
   ranges as seen from that zone's nodes. Giving a remote site's nodes a network path to the
   engine's worker routes, which are unauthenticated, is the operator's job; this chart adds none.
