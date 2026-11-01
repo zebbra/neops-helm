@@ -152,29 +152,29 @@ install's engine tables are owned by `postgres`. From 0.45.0 the engine connects
 
 1. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` to the `neops` password,
    `postgresql.auth.password`, not `postgresql.auth.postgresPassword`.
-2. Hand the engine's tables to `neops`: run the engine's
-   [`tools/sql/owner-to-postgres-user.sql`](https://github.com/zebbra/neops-workflow-engine/blob/v0.45.0/tools/sql/owner-to-postgres-user.sql)
-   as `postgres` in the `neops-workflow` database, from a checkout of the engine at v0.45.0:
+2. Hand the engine's tables to `neops`: save the script from the engine's
+   [upgrade docs](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/10-configuration/#upgrading-an-engine-that-connected-as-postgres)
+   as `owner-to-postgres-user.sql` and run it as `postgres` in the `neops-workflow` database:
 
    ```bash
    kubectl -n neops exec -i neops-postgresql-0 -c postgresql -- sh -c \
      'PGPASSWORD="$(cat /opt/bitnami/postgresql/secrets/postgres-password)" psql -h 127.0.0.1 -U postgres -d neops-workflow -v ON_ERROR_STOP=1 -v role=neops -f -' \
-     < tools/sql/owner-to-postgres-user.sql
+     < owner-to-postgres-user.sql
    ```
 
    The pod is `<release>-postgresql-0` in the umbrella's namespace. The old engine can keep running
    meanwhile, and running the script twice changes nothing.
 
-Skip it and the upgraded engine fails at startup with
-`relation "mikro_orm_migrations" already exists`: `neops` cannot see the migrations table, so the
-engine tries to create it again. The engine's
-[configuration docs](https://github.com/zebbra/neops-workflow-engine/blob/v0.45.0/docs/50-deployment/10-configuration.md)
-have the rest ("Upgrading an engine that connected as `postgres`").
+Skip it and the upgraded engine refuses to start: its log says that it connects as `neops` while
+`postgres` owns its tables, and names the script. It changes nothing: run the script, then restart
+the engine. Skip step 1 instead, and it stops earlier, with
+`password authentication failed for user "neops"`. The engine's
+[upgrade docs](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/10-configuration/#upgrading-an-engine-that-connected-as-postgres) have the rest.
 
 ### Going back to engine 0.44
 
 1. Revert the 0.45 migrations first, as the engine's
-   [Going back to 0.44](https://github.com/zebbra/neops-workflow-engine/blob/v0.45.0/docs/50-deployment/40-operations.md#going-back-to-044)
+   [Going back to 0.44](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/40-operations/#going-back-to-044)
    describes: from the 0.45 image, with this chart's engine settings (`POSTGRES_USER` `neops`
    and its password), which own the tables since the upgrade.
 2. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
