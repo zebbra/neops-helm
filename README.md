@@ -170,3 +170,19 @@ Skip it and the upgraded engine fails at startup with
 engine tries to create it again. The engine's
 [configuration docs](https://github.com/zebbra/neops-workflow-engine/blob/v0.45.0/docs/50-deployment/10-configuration.md)
 have the rest ("Upgrading an engine that connected as `postgres`").
+
+### Going back to engine 0.44
+
+1. Revert the 0.45 migrations first, as the engine's
+   [Going back to 0.44](https://github.com/zebbra/neops-workflow-engine/blob/v0.45.0/docs/50-deployment/40-operations.md#going-back-to-044)
+   describes: from the 0.45 image, with this chart's engine settings (`POSTGRES_USER` `neops`
+   and its password), which own the tables since the upgrade.
+2. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
+   the rollback, since 0.44 always connects as `postgres`:
+
+   ```bash
+   kubectl -n neops get secret neops-postgresql -o jsonpath='{.data.postgres-password}' | base64 -d
+   ```
+
+   The secret is `<release>-postgresql`. The tables handed to `neops` need nothing: `postgres` is a
+   superuser and reaches them as they are.
