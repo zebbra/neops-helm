@@ -95,7 +95,8 @@ The namespace and the `neops-neops-workflow-engine` host follow from the umbrell
 name and namespace, both `neops` here; adjust them if yours differ.
 
 On KIND, run the zone's release on the worker image the umbrella's KIND values use, the
-locally built one, instead of the Quay image the chart defaults to:
+locally built one, instead of the Quay image the chart defaults to. Add these two flags to the
+zone release's `helm install` above:
 
 ```bash
   --set image.repository=neops-worker-sdk \
@@ -139,3 +140,31 @@ release notes ("The rebuild runs on upgrade" in
 [`docs/releases/v2.3.0.md`](https://github.com/zebbra/neops-core/blob/v2.3.0/docs/releases/v2.3.0.md#the-rebuild-runs-on-upgrade-and-search-is-down-while-it-runs))
 cover sizing and the Job's log; going back is under "Going back to an
 earlier release" there.
+
+## Upgrading the engine to 0.45.0
+
+Engines up to 0.44.1 ignored `POSTGRES_USER` and connected as `postgres`, so an existing
+install's engine tables are owned by `postgres`. From 0.45.0 the engine connects as
+`neops-workflow-engine.env.POSTGRES_USER`, which this chart sets to `neops`. Before
+`helm upgrade`, on every install that ran an older engine:
+
+1. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` to the `neops` password,
+   `postgresql.auth.password`, not `postgresql.auth.postgresPassword`.
+2. Hand the engine's tables to `neops`: run the engine's
+   [`tools/sql/owner-to-postgres-user.sql`](https://github.com/zebbra/neops-workflow-engine/blob/v0.45.0/tools/sql/owner-to-postgres-user.sql)
+   as `postgres` in the `neops-workflow` database, from a checkout of the engine at v0.45.0:
+
+   ```bash
+   kubectl -n neops exec -i neops-postgresql-0 -c postgresql -- sh -c \
+     'PGPASSWORD="$(cat /opt/bitnami/postgresql/secrets/postgres-password)" psql -h 127.0.0.1 -U postgres -d neops-workflow -v ON_ERROR_STOP=1 -v role=neops -f -' \
+     < tools/sql/owner-to-postgres-user.sql
+   ```
+
+   The pod is `<release>-postgresql-0` in the umbrella's namespace. The old engine can keep running
+   meanwhile, and running the script twice changes nothing.
+
+Skip it and the upgraded engine fails at startup with
+`relation "mikro_orm_migrations" already exists`: `neops` cannot see the migrations table, so the
+engine tries to create it again. The engine's
+[configuration docs](https://github.com/zebbra/neops-workflow-engine/blob/v0.45.0/docs/50-deployment/10-configuration.md)
+have the rest ("Upgrading an engine that connected as `postgres`").
