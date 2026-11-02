@@ -143,7 +143,7 @@ release notes ("The rebuild runs on upgrade" in
 cover sizing and the Job's log; going back is under "Going back to an
 earlier release" there.
 
-## Upgrading the engine to 0.45.0
+## Upgrading the engine to 0.45.0 or later
 
 Engines before 0.45.0, 0.45.0-beta.1 included, ignore `POSTGRES_USER` and connect as `postgres`,
 so an existing install's engine tables are owned by `postgres`. From 0.45.0 the engine connects as
@@ -221,7 +221,21 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
 
    The secret is `<release>-postgresql`. The tables handed to `neops` need nothing: `postgres` is a
    superuser and reaches them as they are.
-4. Upgrade the umbrella with this repo's `main` chart, which pins engine 0.44.1 and worker 0.3.0
+4. Take core's database back to 2.3.0 while the 2.4.0 core still runs, since `main` also pins core
+   2.3.0, which cannot run on 2.4.0's migrations. Stop core's worker and beat first, as step 1 of
+   the Helm way back in core's
+   [2.3.0 notes](https://github.com/zebbra/neops-core/blob/v2.3.0/docs/releases/v2.3.0.md#going-back-to-an-earlier-release)
+   does. Then drain the log outbox, as "Going back" under "Log lines survive a log store outage" in
+   core's [2.4.0 notes](https://github.com/zebbra/neops-core/blob/v2.4.0/docs/releases/v2.4.0.md#log-lines-survive-a-log-store-outage)
+   says: run `log_store_status` until `rows` is 0. Last, undo `0206_network_zone`, which drops
+   every device's zone and the zone table, and `0205_log_outbox`:
+
+   ```bash
+   kubectl -n neops exec deploy/neops-neops-core -- /docker-entrypoint.sh ./manage.py log_store_status
+   kubectl -n neops exec deploy/neops-neops-core -- /docker-entrypoint.sh ./manage.py migrate core 0204_merge_20261029_logging_develop
+   ```
+
+5. Upgrade the umbrella with this repo's `main` chart, which pins engine 0.44.1 and worker 0.3.0
    together, so the central worker goes back with the engine.
 
 Going forward again, the engine forgets the zones of every worker that registered before the
