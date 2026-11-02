@@ -173,15 +173,23 @@ the engine. Skip step 1 instead, and it stops earlier, with
 
 ### Going back to engine 0.44.1
 
-Going back to the engine this chart pinned before, 0.44.1, crosses two engine minors.
+Going back to the engine this chart pinned before, 0.44.1, crosses two engine minors. An engine
+without zones ignores a worker's zones, so a zone's worker left polling it takes any zone's jobs,
+and a 0.5 worker cannot read the jobs 0.44 hands out.
 
-1. Revert the 0.46 migrations from the 0.46 image, as the engine's
+1. Scale every zone's worker release to 0, one command per zone release:
+
+   ```bash
+   kubectl -n neops scale deployment neops-worker-b --replicas=0
+   ```
+
+2. Revert the 0.46 migrations from the 0.46 image, as the engine's
    [Going back to 0.45](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/40-operations/#going-back-to-045)
    describes, with this chart's engine settings (`POSTGRES_USER` `neops` and its password), which
    own the tables since the upgrade. This also reverts 0.45's one migration,
    `Migration20261102104651`: the revert runs in name order, and that name sorts after the zones
    migrations.
-2. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
+3. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
    the rollback, since 0.44 always connects as `postgres`:
 
    ```bash
@@ -190,3 +198,17 @@ Going back to the engine this chart pinned before, 0.44.1, crosses two engine mi
 
    The secret is `<release>-postgresql`. The tables handed to `neops` need nothing: `postgres` is a
    superuser and reaches them as they are.
+4. Upgrade the umbrella with this repo's `main` chart, which pins engine 0.44.1 and worker 0.3.0
+   together, so the central worker goes back with the engine.
+
+Going forward again, the engine forgets the zones of every worker that registered before the
+upgrade and counts it in `default`. After the umbrella upgrade, restart the central worker, then
+`helm upgrade` each zone release to the umbrella's worker version and scale it back up:
+
+```bash
+kubectl -n neops rollout restart deployment neops-neops-worker
+kubectl -n neops scale deployment neops-worker-b --replicas=2
+```
+
+The deployment names follow from the release names used above: `<release>-neops-worker` for the
+umbrella's worker, and the release name for a zone's.
