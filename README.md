@@ -171,13 +171,19 @@ the engine. Skip step 1 instead, and it stops earlier, with
 `password authentication failed for user "neops"`. The engine's
 [upgrade docs](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/10-configuration/#upgrading-an-engine-that-connected-as-postgres) have the rest.
 
-### Going back to engine 0.44
+### Going back to engine 0.44.1
 
-1. Revert the 0.45 migrations first, as the engine's
-   [Going back to 0.44](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/40-operations/#going-back-to-044)
-   describes: from the 0.45 image, with this chart's engine settings (`POSTGRES_USER` `neops`
-   and its password), which own the tables since the upgrade.
-2. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
+Going back to the engine this chart pinned before, 0.44.1, crosses two engine minors. Run both
+reverts with this chart's engine settings (`POSTGRES_USER` `neops` and its password), which own
+the tables since the upgrade:
+
+1. Revert the 0.46 migrations from the 0.46 image, as the engine's
+   [Going back to 0.45](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/40-operations/#going-back-to-045)
+   describes.
+2. Revert the one migration 0.45 added, `Migration20261102104651`, which renames
+   `job_result.rollback_data_bytes` to `rollback_data_size_bytes`. Run the same command from the
+   0.45.0 image's working directory, with `down({ to: 'Migration20261102104651' })`.
+3. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
    the rollback, since 0.44 always connects as `postgres`:
 
    ```bash
