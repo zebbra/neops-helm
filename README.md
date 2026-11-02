@@ -189,6 +189,29 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
    own the tables since the upgrade. This also reverts 0.45's one migration,
    `Migration20261102104651`: the revert runs in name order, and that name sorts after the zones
    migrations.
+
+   The engine must be stopped, so there is no pod to `kubectl exec` into. Stop it, run that page's
+   SQL, then run the down in a one-off pod from the 0.46 image, with the engine's pull secret,
+   database settings and Secret (`<release>-neops-workflow-engine`, which holds
+   `POSTGRES_PASSWORD`):
+
+   ```bash
+   kubectl -n neops scale deployment neops-neops-workflow-engine --replicas=0
+   kubectl -n neops run engine-migrate-down --rm -i --restart=Never \
+     --image=quay.io/zebbra/neops-workflow-engine:0.46.0 \
+     --env=POSTGRES_HOST=neops-postgresql --env=POSTGRES_PORT=5432 --env=POSTGRES_USER=neops \
+     --override-type=strategic --overrides='{"apiVersion": "v1", "spec": {
+       "imagePullSecrets": [{"name": "neops-quay-registry"}],
+       "containers": [{"name": "engine-migrate-down",
+         "envFrom": [{"secretRef": {"name": "neops-neops-workflow-engine"}}]}]}}' \
+     -- node -e 'const { MikroORM } = require("@mikro-orm/core");
+   const config = require("./dist/neops-workflow-engine/src/mikro-orm.config").default;
+   MikroORM.init(config).then(async orm => {
+     await orm.getMigrator().down({ to: "Migration20261030184705" });
+     await orm.close(true);
+   });'
+   ```
+
 3. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
    the rollback, since 0.44 always connects as `postgres`:
 
