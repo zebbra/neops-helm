@@ -70,7 +70,7 @@ network's addresses, with their devices' credentials, from inside the site's net
 ## Network zones
 
 A worker claims only the jobs of the network zones it lists in `NEOPS_WORKER_NETWORK_ZONES`.
-Zones need core 2.4.0, engine 0.45.0 and worker 0.4.0 or later; older workers ignore the
+Zones need core 2.4.0, engine 0.46.0 and worker 0.5.0 or later; older workers ignore the
 variable. The umbrella's own worker is the central one: `values.yaml` sets
 `neops-worker.env.NEOPS_WORKER_NETWORK_ZONES: default`. Keep it out of the neops-worker
 chart's own defaults and out of any values file a remote site copies, so a zone release that
