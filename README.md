@@ -145,8 +145,8 @@ earlier release" there.
 
 ## Upgrading the engine to 0.45.0
 
-Engines up to 0.44.1 ignored `POSTGRES_USER` and connected as `postgres`, so an existing
-install's engine tables are owned by `postgres`. From 0.45.0 the engine connects as
+Engines before 0.45.0, 0.45.0-beta.1 included, ignore `POSTGRES_USER` and connect as `postgres`,
+so an existing install's engine tables are owned by `postgres`. From 0.45.0 the engine connects as
 `neops-workflow-engine.env.POSTGRES_USER`, which this chart sets to `neops`. Before
 `helm upgrade`, on every install that ran an older engine:
 
