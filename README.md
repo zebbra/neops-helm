@@ -173,17 +173,27 @@ the engine. Skip step 1 instead, and it stops earlier, with
 
 ### Going back to engine 0.44.1
 
-Going back to the engine this chart pinned before, 0.44.1, crosses two engine minors. Run both
+Going back to the engine this chart pinned before, 0.44.1, crosses two engine minors. Run the
 reverts with this chart's engine settings (`POSTGRES_USER` `neops` and its password), which own
 the tables since the upgrade:
 
 1. Revert the 0.46 migrations from the 0.46 image, as the engine's
    [Going back to 0.45](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/40-operations/#going-back-to-045)
    describes.
-2. Revert the one migration 0.45 added, `Migration20261102104651`, which renames
-   `job_result.rollback_data_bytes` to `rollback_data_size_bytes`. Run the same command from the
-   0.45.0 image's working directory, with `down({ to: 'Migration20261102104651' })`.
-3. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
+2. List the migrations the engine still has applied:
+
+   ```bash
+   kubectl -n neops exec neops-postgresql-0 -c postgresql -- sh -c \
+     'PGPASSWORD="$(cat /opt/bitnami/postgresql/secrets/postgres-password)" psql -h 127.0.0.1 -U postgres -d neops-workflow -tAc "select name from mikro_orm_migrations order by executed_at"'
+   ```
+
+   An install that went from 0.44.1 straight to 0.46 ran 0.45's one migration,
+   `Migration20261102104651`, after the 0.46 ones, so step 1 already reverted it and it is not
+   listed. An install that ran 0.45 before 0.46 still lists it.
+3. Only if `Migration20261102104651` is listed, revert it: run the same command from the 0.45.0
+   image's working directory, with `down({ to: 'Migration20261102104651' })`. It renames
+   `job_result.rollback_data_size_bytes` back to `rollback_data_bytes`.
+4. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
    the rollback, since 0.44 always connects as `postgres`:
 
    ```bash
