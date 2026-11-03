@@ -177,13 +177,18 @@ Going back to the engine this chart pinned before, 0.44.1, crosses two engine mi
 without zones ignores a worker's zones, so a zone's worker left polling it takes any zone's jobs,
 and a 0.5 worker cannot read the jobs 0.44 hands out.
 
-1. Scale every zone's worker release to 0, one command per zone release:
+1. Let every run finish, and start no new ones. A job claimed by a worker you stop next fails as
+   worker-offline after about 6 minutes, and its rollback finds no worker in that zone.
+2. Scale every zone's worker release to 0, one command per zone release, and the umbrella's
+   central worker too: it is a 0.5 worker, which cannot read the jobs 0.44 hands out. Step 6 brings
+   it back at 0.3.0.
 
    ```bash
    kubectl -n neops scale deployment neops-worker-b --replicas=0
+   kubectl -n neops scale deployment neops-neops-worker --replicas=0
    ```
 
-2. Revert the 0.46 migrations from the 0.46 image, as the engine's
+3. Revert the 0.46 migrations from the 0.46 image, as the engine's
    [Going back to 0.45](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/40-operations/#going-back-to-045)
    describes, with this chart's engine settings (`POSTGRES_USER` `neops` and its password), which
    own the tables since the upgrade. This also reverts 0.45's two migrations,
@@ -191,13 +196,16 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
    refused workers: the revert runs in name order, and both names sort after the zones migrations.
    0.44.1 applies neither again.
 
-   The engine must be stopped, so there is no pod to `kubectl exec` into. Stop it, run that page's
-   SQL, then run the down in a one-off pod from the 0.46 image, with the engine's pull secret,
+   The engine must be stopped, so there is no pod to `kubectl exec` into. Stop it, save that page's
+   SQL as `going-back-0.45.sql` and run it, then run the down in a one-off pod from the 0.46 image, with the engine's pull secret,
    database settings and Secret (`<release>-neops-workflow-engine`, which holds
    `POSTGRES_PASSWORD`):
 
    ```bash
    kubectl -n neops scale deployment neops-neops-workflow-engine --replicas=0
+   kubectl -n neops exec -i neops-postgresql-0 -c postgresql -- sh -c \
+     'PGPASSWORD="$(cat /opt/bitnami/postgresql/secrets/postgres-password)" psql -h 127.0.0.1 -U postgres -d neops-workflow -v ON_ERROR_STOP=1 -f -' \
+     < going-back-0.45.sql
    kubectl -n neops run engine-migrate-down --rm -i --restart=Never \
      --image=quay.io/zebbra/neops-workflow-engine:0.46.0 \
      --env=POSTGRES_HOST=neops-postgresql --env=POSTGRES_PORT=5432 --env=POSTGRES_USER=neops \
@@ -213,7 +221,7 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
    });'
    ```
 
-3. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
+4. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
    the rollback, since 0.44 always connects as `postgres`:
 
    ```bash
@@ -222,7 +230,7 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
 
    The secret is `<release>-postgresql`. The tables handed to `neops` need nothing: `postgres` is a
    superuser and reaches them as they are.
-4. Take core's database back to 2.3.0 while the 2.4.0 core still runs, since `main` also pins core
+5. Take core's database back to 2.3.0 while the 2.4.0 core still runs, since `main` also pins core
    2.3.0, which cannot run on 2.4.0's migrations. Stop core's worker and beat first, as step 1 of
    the Helm way back in core's
    [2.3.0 notes](https://github.com/zebbra/neops-core/blob/v2.3.0/docs/releases/v2.3.0.md#going-back-to-an-earlier-release)
@@ -236,11 +244,13 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
    kubectl -n neops exec deploy/neops-neops-core -- /docker-entrypoint.sh ./manage.py migrate core 0204_merge_20261029_logging_develop
    ```
 
-5. Upgrade the umbrella with this repo's `main` chart, which pins engine 0.44.1 and worker 0.3.0
+6. Upgrade the umbrella with this repo's `main` chart, which pins engine 0.44.1 and worker 0.3.0
    together, so the central worker goes back with the engine.
 
-Going forward again, the engine forgets the zones of every worker that registered before the
-upgrade and counts it in `default`. After the umbrella upgrade, restart the central worker, then
+Going forward again, set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `neops`
+password first (undoing step 4), or the 0.46 engine fails with
+`password authentication failed for user "neops"`. The engine forgets the zones of every worker
+that registered before the upgrade and counts it in `default`. After the umbrella upgrade, restart the central worker, then
 `helm upgrade` each zone release to the umbrella's worker version and scale it back up:
 
 ```bash
