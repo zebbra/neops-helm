@@ -186,9 +186,10 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
 2. Revert the 0.46 migrations from the 0.46 image, as the engine's
    [Going back to 0.45](https://docs.neops.io/neops-workflow-engine/docs/50-deployment/40-operations/#going-back-to-045)
    describes, with this chart's engine settings (`POSTGRES_USER` `neops` and its password), which
-   own the tables since the upgrade. This also reverts 0.45's one migration,
-   `Migration20261102104651`: the revert runs in name order, and that name sorts after the zones
-   migrations.
+   own the tables since the upgrade. This also reverts 0.45's two migrations,
+   `Migration20261102104651` and `Migration20261102113953`, whose revert deletes the rows of
+   refused workers: the revert runs in name order, and both names sort after the zones migrations.
+   0.44.1 applies neither again.
 
    The engine must be stopped, so there is no pod to `kubectl exec` into. Stop it, run that page's
    SQL, then run the down in a one-off pod from the 0.46 image, with the engine's pull secret,
