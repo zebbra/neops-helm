@@ -203,6 +203,7 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
 
    ```bash
    kubectl -n neops scale deployment neops-neops-workflow-engine --replicas=0
+   kubectl -n neops rollout status deployment neops-neops-workflow-engine
    kubectl -n neops exec -i neops-postgresql-0 -c postgresql -- sh -c \
      'PGPASSWORD="$(cat /opt/bitnami/postgresql/secrets/postgres-password)" psql -h 127.0.0.1 -U postgres -d neops-workflow -v ON_ERROR_STOP=1 -f -' \
      < going-back-0.45.sql
@@ -222,7 +223,7 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
    ```
 
 4. Set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `postgres` password before
-   the rollback, since 0.44 always connects as `postgres`:
+   step 6, since 0.44 always connects as `postgres`:
 
    ```bash
    kubectl -n neops get secret neops-postgresql -o jsonpath='{.data.postgres-password}' | base64 -d
@@ -251,7 +252,9 @@ Going forward again, set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back 
 password first (undoing step 4), or the 0.46 engine fails with
 `password authentication failed for user "neops"`. The engine forgets the zones of every worker
 that registered before the upgrade and counts it in `default`. After the umbrella upgrade, restart the central worker, then
-`helm upgrade` each zone release to the umbrella's worker version and scale it back up:
+scale each zone release back up. A zone release already on the umbrella's worker version needs no
+upgrade; otherwise upgrade it with `--reuse-values`, since a plain `helm upgrade` resets its
+`NEOPS_WORKER_NETWORK_ZONES` and the worker is refused at start:
 
 ```bash
 kubectl -n neops rollout restart deployment neops-neops-worker
