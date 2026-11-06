@@ -239,8 +239,10 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
    [2.3.0 notes](https://github.com/zebbra/neops-core/blob/v2.3.0/docs/releases/v2.3.0.md#going-back-to-an-earlier-release)
    does. Then drain the log outbox, as "Going back" under "Log lines survive a log store outage" in
    core's [2.4.0 notes](https://github.com/zebbra/neops-core/blob/v2.4.0/docs/releases/v2.4.0.md#log-lines-survive-a-log-store-outage)
-   says: run `log_store_status` until `rows` is 0. Last, undo `0206_network_zone`, which drops
-   every device's zone and the zone table, and `0205_log_outbox`:
+   says: run `log_store_status` until `rows` is 0. Last, undo `0206_network_zone`, which deletes
+   every zone and every device's zone, as
+   [Going back below 2.4.0](https://github.com/zebbra/neops-core/blob/v2.4.0/docs/releases/v2.4.0.md#going-back-below-240)
+   in the same notes warns (note which devices are in which zone first), and `0205_log_outbox`:
 
    ```bash
    kubectl -n neops exec deploy/neops-neops-core -- /docker-entrypoint.sh ./manage.py log_store_status
@@ -262,11 +264,15 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
 Going forward again, switch this checkout back to the chart you go forward to (`git switch main`,
 then `helm dependency update charts/neops`), and set `neops-workflow-engine.secrets.POSTGRES_PASSWORD`
 back to the `neops` password first (undoing step 4), or the 0.46 engine fails with
-`password authentication failed for user "neops"`. The engine forgets the zones of every worker
-that registered before the upgrade and counts it in `default`. After the umbrella upgrade, restart the central worker, then
-scale each zone release back up. A zone release already on the umbrella's worker version needs no
-upgrade; otherwise upgrade it with `--reuse-values`, since a plain `helm upgrade` resets its
-`NEOPS_WORKER_NETWORK_ZONES` and the worker is refused at start:
+`password authentication failed for user "neops"`. The zones are gone and every device is in
+`default`, and the engine counts every worker that registered before the upgrade in `default`.
+After the umbrella upgrade, restart the central worker, recreate the zones on the web client's
+Network zones page, and move their devices back with runs, as core's
+[Going back below 2.4.0](https://github.com/zebbra/neops-core/blob/v2.4.0/docs/releases/v2.4.0.md#going-back-below-240)
+says. Then scale each zone release back up; a zone's workers are refused while their zone does not
+exist. A zone release already on the umbrella's worker version needs no upgrade; otherwise upgrade
+it with `--reuse-values`, since a plain `helm upgrade` resets its `NEOPS_WORKER_NETWORK_ZONES` and
+the worker is refused at start:
 
 ```bash
 kubectl -n neops rollout restart deployment neops-neops-worker
