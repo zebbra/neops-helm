@@ -59,9 +59,11 @@ the Django superuser. From core 2.4.0 the same hook gives it the Neops role
 neops-docker-compose's `cms-init` runs the same two commands. Without the role, the superuser
 can log in and then read and write nothing. The seed re-applies every grant on every install and
 upgrade, so a grant removed from that role by hand comes back. If other users already hold a role
-of this name, the seed does not widen it and warns: the role still gets the `network-zones` write,
-but neither the scope grant nor the workflow profile. Set `neops-core.superuser.role` to a role
-only the superuser holds.
+of this name, the seed widens it only by the `network-zones` write and warns, skipping the scope
+grant and the workflow profile. Every holder of that role, under OIDC whoever the identity provider
+puts in it, then may write every zone (zones are not per tenant). Set `neops-core.superuser.role` to
+a role only the superuser holds; the seed re-applies the write on every upgrade, so remove it from
+the shared role by hand afterwards if it should not have it.
 
 Other users who create zones need write on `network-zones` in a role of their own: grant it in
 Django admin under *Role permission elements*. Never work around a missing grant by starting a
