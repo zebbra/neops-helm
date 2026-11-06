@@ -78,7 +78,8 @@ misses its own setting is refused rather than serving `default`.
 
 Each other zone gets one more release of the neops-worker chart, pinned to nodes inside that
 zone's network. Install it at the umbrella's worker version, since on 0.x the engine accepts
-only workers of its own minor version and every zone's release upgrades with the umbrella:
+only workers whose engine client is of its own minor, each worker release pins one client, and
+every zone's release upgrades with the umbrella:
 
 ```bash
 kubectl label node <node-in-network-b> network-zone=zone-b
