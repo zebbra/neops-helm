@@ -231,8 +231,8 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
 
    The secret is `<release>-postgresql`. The tables handed to `neops` need nothing: `postgres` is a
    superuser and reaches them as they are.
-5. Take core's database back to 2.3.0 while the 2.4.0 core still runs, since `main` also pins core
-   2.3.0, which cannot run on 2.4.0's migrations. Stop core's worker and beat first, as step 1 of
+5. Take core's database back to 2.3.0 while the 2.4.0 core still runs, since step 6's chart pins
+   core 2.3.0, which cannot run on 2.4.0's migrations. Stop core's worker and beat first, as step 1 of
    the Helm way back in core's
    [2.3.0 notes](https://github.com/zebbra/neops-core/blob/v2.3.0/docs/releases/v2.3.0.md#going-back-to-an-earlier-release)
    does. Then drain the log outbox, as "Going back" under "Log lines survive a log store outage" in
@@ -245,11 +245,21 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
    kubectl -n neops exec deploy/neops-neops-core -- /docker-entrypoint.sh ./manage.py migrate core 0204_merge_20261029_logging_develop
    ```
 
-6. Upgrade the umbrella with this repo's `main` chart, which pins engine 0.44.1 and worker 0.3.0
-   together, so the central worker goes back with the engine.
+6. Upgrade the umbrella with this repo's chart at commit `6f93b5f` (umbrella 0.2.1), which pins
+   core 2.3.0, engine 0.44.1, worker 0.3.0 and web client 6.0.1 together, so the central worker
+   goes back with the engine. This repo has no tags and `main` pins the zones release, so check out
+   that commit and upgrade from `charts/neops` with the values you installed with. That commit's
+   README has no going-back section, so keep this one open on GitHub:
 
-Going forward again, set `neops-workflow-engine.secrets.POSTGRES_PASSWORD` back to the `neops`
-password first (undoing step 4), or the 0.46 engine fails with
+   ```bash
+   git switch --detach 6f93b5f
+   helm dependency update charts/neops
+   helm upgrade neops charts/neops --namespace neops -f <your values file>  # plus any --set-file you installed with
+   ```
+
+Going forward again, switch this checkout back to the chart you go forward to (`git switch main`,
+then `helm dependency update charts/neops`), and set `neops-workflow-engine.secrets.POSTGRES_PASSWORD`
+back to the `neops` password first (undoing step 4), or the 0.46 engine fails with
 `password authentication failed for user "neops"`. The engine forgets the zones of every worker
 that registered before the upgrade and counts it in `default`. After the umbrella upgrade, restart the central worker, then
 scale each zone release back up. A zone release already on the umbrella's worker version needs no
