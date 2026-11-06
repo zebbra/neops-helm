@@ -69,7 +69,8 @@ network's addresses, with their devices' credentials, from inside the site's net
 
 ## Network zones
 
-A worker claims only the jobs of the network zones it lists in `NEOPS_WORKER_NETWORK_ZONES`.
+A worker claims only the jobs of the network zones it lists in `NEOPS_WORKER_NETWORK_ZONES`;
+the engine's [Network Zones](https://docs.neops.io/neops-workflow-engine/docs/20-workflows/45-network-zones/) page has the rules.
 Zones need core 2.4.0, engine 0.46.0 and worker 0.5.0 or later; older workers ignore the
 variable. The umbrella's own worker is the central one: `values.yaml` sets
 `neops-worker.env.NEOPS_WORKER_NETWORK_ZONES: default`. Keep it out of the neops-worker
@@ -119,7 +120,10 @@ zone release's `helm install` above:
   client 6.1.0 and write on the `network-zones` permission element. The `networkZoneUpsert`
   mutation needs the same write, and Django admin works too. No worker needs to be up for
   that. A zone's workers are refused at registration while the zone doesn't exist. Once any
-  zone besides `default` exists, a worker that lists no zones is refused at its next start.
+  zone besides `default` exists, a worker that lists no zones is refused at its next start, but
+  only then: one already running keeps claiming `default` jobs. After creating the first zone,
+  set `NEOPS_WORKER_NETWORK_ZONES` on every worker that lists none and restart it; the Monitor
+  App's Workers page flags the workers that registered no zone list.
 - **Retiring a site.** First move the zone's devices to another zone with
   `device_update_device`, or delete them. If the site is already unreachable, give that step
   `networkZone: { name: <a live zone>, override: true }`, or delete the devices in Django admin,
@@ -129,6 +133,10 @@ zone release's `helm install` above:
 - **Networking.** A zone's management ranges must not overlap the cluster's pod and service
   ranges as seen from that zone's nodes. Giving a remote site's nodes a network path to the
   engine's worker routes, which are unauthenticated, is the operator's job; this chart adds none.
+  A zone routes jobs and authorizes nothing: every pod or host that reaches those routes can
+  register for any zone, `default` included, and receive its devices' passwords. Restrict who
+  reaches the engine, for example with a NetworkPolicy, and encrypt the path between sites,
+  with the CNI's encryption or a VPN.
 
 ## Upgrading core
 
