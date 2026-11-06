@@ -204,7 +204,8 @@ and a 0.5 worker cannot read the jobs 0.44 hands out.
 
    ```bash
    kubectl -n neops scale deployment neops-neops-workflow-engine --replicas=0
-   kubectl -n neops rollout status deployment neops-neops-workflow-engine
+   kubectl -n neops wait --for=delete pod --timeout=5m \
+     -l app.kubernetes.io/name=neops-workflow-engine,app.kubernetes.io/instance=neops
    kubectl -n neops exec -i neops-postgresql-0 -c postgresql -- sh -c \
      'PGPASSWORD="$(cat /opt/bitnami/postgresql/secrets/postgres-password)" psql -h 127.0.0.1 -U postgres -d neops-workflow -v ON_ERROR_STOP=1 -f -' \
      < going-back-0.45.sql
