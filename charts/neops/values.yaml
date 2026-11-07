@@ -111,6 +111,8 @@ neops-worker:
   env:
     URL_BLACKBOARD: http://neops-neops-workflow-engine:3030
     WORKER_NAME: neops-worker
+    # Central worker only: README.md "Network zones" says why this stays out of shared values.
+    NEOPS_WORKER_NETWORK_ZONES: default
 
 neops-web-client:
   enabled: true
