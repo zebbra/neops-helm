@@ -146,14 +146,26 @@ is_search_index_stale() {
   return 1
 }
 
-rebuild_search_index() {
+elastic_index_usage() {
   local pod=$1
+  kubectl -n "$NAMESPACE" exec "$pod" -- ./manage.py elastic_index --help 2>&1 || true
+}
+
+# Core exits 3 when it finished the rebuild but set documents Elasticsearch refused aside.
+rebuild_search_index() {
+  local pod=$1 usage=$2
   echo "the search index no longer matches neops-core or Elasticsearch: rebuilding it"
   local flags=(--rebuild --force)
-  if kubectl -n "$NAMESPACE" exec "$pod" -- ./manage.py elastic_index --help 2>&1 | grep -- '--sync-lookups' >/dev/null; then
+  if [[ "$usage" == *--sync-lookups* ]]; then
     flags+=(--sync-lookups)
   fi
-  kubectl -n "$NAMESPACE" exec "$pod" -- ./manage.py elastic_index "${flags[@]}"
+  local rc=0
+  kubectl -n "$NAMESPACE" exec "$pod" -- ./manage.py elastic_index "${flags[@]}" || rc=$?
+  if [ "$rc" -eq 3 ]; then
+    echo "warning: the search index was rebuilt, but Elasticsearch refused some documents and neops-core set them aside; the rebuild's output above gives each reason" >&2
+    return 0
+  fi
+  return "$rc"
 }
 
 # Core signs its tokens with this keypair and the engine verifies them with the
@@ -232,12 +244,16 @@ if [ "$is_upgrade" = true ]; then
   test -n "$pod" || { echo "error: no core app pod in namespace $NAMESPACE yet" >&2; exit 1; }
   kubectl -n "$NAMESPACE" wait --for=condition=ready "$pod" --timeout=600s
 
-  after_schema=$(get_schema_hash "$pod")
-  after_core_image=$(get_container_image "$pod" "neops-core")
-  after_es_image=$(get_container_image "app.kubernetes.io/name=elasticsearch,app.kubernetes.io/component=master" "elasticsearch")
-
-  if is_search_index_stale "$before_es_image" "$after_es_image" "$before_core_image" "$after_core_image" "$before_schema" "$after_schema"; then
-    rebuild_search_index "$pod"
+  usage=$(elastic_index_usage "$pod")
+  if [[ "$usage" == *--rebuild-if-stale* ]]; then
+    echo "neops-core's migrate hook rebuilt whatever search index was stale (elastic_index --rebuild-if-stale): nothing left to rebuild"
+  else
+    after_schema=$(get_schema_hash "$pod")
+    after_core_image=$(get_container_image "$pod" "neops-core")
+    after_es_image=$(get_container_image "app.kubernetes.io/name=elasticsearch,app.kubernetes.io/component=master" "elasticsearch")
+    if is_search_index_stale "$before_es_image" "$after_es_image" "$before_core_image" "$after_core_image" "$before_schema" "$after_schema"; then
+      rebuild_search_index "$pod" "$usage"
+    fi
   fi
 fi
 
