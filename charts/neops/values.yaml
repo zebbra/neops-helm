@@ -13,8 +13,17 @@ registry:
   username: ""
   password: ""
 
+# Bitnami no longer publishes the images its charts name under docker.io/bitnami/*; the
+# charts refuse the bitnamilegacy/* replacements below unless this is set.
+global:
+  security:
+    allowInsecureImages: true
+
 postgresql:
   enabled: true
+  image:
+    repository: bitnamilegacy/postgresql
+    tag: 17.6.0-debian-12-r4
   auth:
     username: neops
     password: ""
@@ -28,11 +37,20 @@ postgresql:
 redis:
   enabled: true
   architecture: standalone
+  image:
+    repository: bitnamilegacy/redis
+    tag: 8.2.1-debian-12-r0
   auth:
     enabled: false
 
 elasticsearch:
   enabled: true
+  image:
+    repository: bitnamilegacy/elasticsearch
+    tag: 8.18.0-debian-12-r2
+  sysctlImage:
+    repository: bitnamilegacy/os-shell
+    tag: 12-debian-12-r51
   security:
     enabled: false
   master:
@@ -54,6 +72,13 @@ elasticsearch:
 minio:
   enabled: false
   mode: standalone
+  image:
+    repository: bitnamilegacy/minio
+    tag: 2025.7.23-debian-12-r5
+  console:
+    image:
+      repository: bitnamilegacy/minio-object-browser
+      tag: 2.0.2-debian-12-r3
   auth:
     rootUser: neops
     rootPassword: ""

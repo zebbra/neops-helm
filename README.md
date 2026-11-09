@@ -5,9 +5,10 @@ Umbrella Helm chart for the NeOps platform plus a local KIND loop.
 `charts/neops` composes the NeOps services as OCI subcharts from
 `oci://quay.io/zebbra/charts` (each service repo owns and publishes its own chart under
 `chart/<name>/` on every tag) together with Bitnami `postgresql`, `redis`,
-`elasticsearch` and `minio`. `values.yaml` holds in-cluster wiring only; every credential
-comes from an environment values file. `values-kind.yaml` is the KIND environment: all
-credentials are `unsafe`, images are the locally built `cutting-edge` tags, and every
+`elasticsearch` and `minio`. `values.yaml` holds in-cluster wiring and pins the Bitnami
+charts' images to `bitnamilegacy/*` (Bitnami no longer publishes the tags its charts name);
+every credential comes from an environment values file. `values-kind.yaml` is the KIND
+environment: all credentials are `unsafe`, Neops images are the locally built `cutting-edge` tags, and every
 service defaults to `http://*.neops.local`. Setting `KIND_DOMAIN` and `KIND_SCHEME` in
 `.env` (e.g. `KIND_DOMAIN=neops.example.com`, `KIND_SCHEME=https`) publishes the release
 under both `*.${KIND_DOMAIN}` and `*.neops.local`.

@@ -14,15 +14,7 @@ _rootPath: &rootPath
   - path: /
     pathType: Prefix
 
-# Required by the Bitnami charts once their images are swapped to bitnamilegacy/*.
-global:
-  security:
-    allowInsecureImages: true
-
 postgresql:
-  image:
-    repository: bitnamilegacy/postgresql
-    tag: 17.6.0-debian-12-r4
   auth:
     password: unsafe
     postgresPassword: unsafe
@@ -38,20 +30,11 @@ postgresql:
       max_connections = 300
 
 redis:
-  image:
-    repository: bitnamilegacy/redis
-    tag: 8.2.1-debian-12-r0
   master:
     persistence:
       enabled: false
 
 elasticsearch:
-  image:
-    repository: bitnamilegacy/elasticsearch
-    tag: 8.18.0-debian-12-r2
-  sysctlImage:
-    repository: bitnamilegacy/os-shell
-    tag: 12-debian-12-r51
   master:
     heapSize: 1g
     resources:
@@ -65,9 +48,6 @@ elasticsearch:
 
 # Inert until `minio.enabled` is true in values.yaml; kept so enabling storage works.
 minio:
-  image:
-    repository: bitnamilegacy/minio
-    tag: 2025.7.23-debian-12-r5
   auth:
     rootPassword: unsafe
   persistence:
