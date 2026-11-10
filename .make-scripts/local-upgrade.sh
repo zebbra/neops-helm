@@ -152,6 +152,17 @@ elastic_index_usage() {
 }
 
 # Core exits 3 when it finished the rebuild but set documents Elasticsearch refused aside.
+run_elastic_index() {
+  local pod=$1; shift
+  local rc=0
+  kubectl -n "$NAMESPACE" exec "$pod" -- ./manage.py elastic_index "$@" || rc=$?
+  if [ "$rc" -eq 3 ]; then
+    echo "warning: the search index was rebuilt, but Elasticsearch refused some documents and neops-core set them aside; the rebuild's output above gives each reason" >&2
+    return 0
+  fi
+  return "$rc"
+}
+
 rebuild_search_index() {
   local pod=$1 usage=$2
   echo "the search index no longer matches neops-core or Elasticsearch: rebuilding it"
@@ -159,13 +170,7 @@ rebuild_search_index() {
   if [[ "$usage" == *--sync-lookups* ]]; then
     flags+=(--sync-lookups)
   fi
-  local rc=0
-  kubectl -n "$NAMESPACE" exec "$pod" -- ./manage.py elastic_index "${flags[@]}" || rc=$?
-  if [ "$rc" -eq 3 ]; then
-    echo "warning: the search index was rebuilt, but Elasticsearch refused some documents and neops-core set them aside; the rebuild's output above gives each reason" >&2
-    return 0
-  fi
-  return "$rc"
+  run_elastic_index "$pod" "${flags[@]}"
 }
 
 # Core signs its tokens with this keypair and the engine verifies them with the
@@ -246,7 +251,8 @@ if [ "$is_upgrade" = true ]; then
 
   usage=$(elastic_index_usage "$pod")
   if [[ "$usage" == *--rebuild-if-stale* ]]; then
-    echo "neops-core's migrate hook rebuilt whatever search index was stale (elastic_index --rebuild-if-stale): nothing left to rebuild"
+    # The migrate hook may have run against the Elasticsearch pod the rollout above replaced.
+    run_elastic_index "$pod" --rebuild-if-stale
   else
     after_schema=$(get_schema_hash "$pod")
     after_core_image=$(get_container_image "$pod" "neops-core")
