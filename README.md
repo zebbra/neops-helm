@@ -142,6 +142,43 @@ zone release's `helm install` above:
   reaches the engine, for example with a NetworkPolicy, and encrypt the path between sites,
   with the CNI's encryption or a VPN.
 
+## Upgrading a release installed before the Bitnami pins
+
+`values.yaml` pins `bitnamilegacy/postgresql:17.6.0-debian-12-r4` and
+`bitnamilegacy/redis:8.2.1-debian-12-r0`. Before those pins, a release installed from the base
+values without its own image overrides ran the chart default `bitnami/postgresql:latest`,
+18.6.0 in November 2026, and `bitnami/redis:latest`, 8.10.3. KIND releases had the pins all along.
+Upgrading such a release onto the pins starts Postgres 17 on an 18 data directory, which
+Postgres refuses, and starts Redis 8.2 on an RDB file a newer Redis wrote, which it may refuse.
+
+Check what the release runs before `helm upgrade`:
+
+```bash
+kubectl -n neops get pod neops-postgresql-0 neops-redis-master-0 \
+  -o jsonpath='{range .items[*]}{.status.containerStatuses[0].image}{"  "}{.status.containerStatuses[0].imageID}{"\n"}{end}'
+```
+
+If it is a `bitnami/*:latest` image, keep running exactly that image: bitnamilegacy publishes no
+Postgres 18 and no Redis newer than 8.2.1. Pin its digest in your environment values file, since
+`latest` keeps moving:
+
+```yaml
+postgresql:
+  image:
+    repository: bitnami/postgresql
+    tag: latest
+    digest: sha256:<digest from the imageID above>
+redis:
+  image:
+    repository: bitnami/redis
+    tag: latest
+    digest: sha256:<digest from the imageID above>
+```
+
+The pods are `<release>-postgresql-0` and `<release>-redis-master-0` in the umbrella's
+namespace. Moving such a release onto Postgres 17 needs a dump and restore, which this chart
+does not do.
+
 ## Upgrading core
 
 Since core chart 2.3.0, core's post-upgrade migrate Job rebuilds the search indices this
